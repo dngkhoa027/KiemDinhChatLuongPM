@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "73023959003",
-    "project_id": "flutterqun0702",
-    "storage_bucket": "flutterqun0702.firebasestorage.app"
+    "project_number": "294168614561",
+    "project_id": "shopee-20bc4",
+    "storage_bucket": "shopee-20bc4.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:73023959003:android:eb2335932162704c5f41fe",
+        "mobilesdk_app_id": "1:294168614561:android:ac530b7bc4294b350902e0",
         "android_client_info": {
           "package_name": "com.example.doanflutter"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyAhACwVbPZgcSpQrEw9OKR-PYCxZ9W2ggg"
+          "current_key": "AIzaSyDdj10oOMyn_merdvt8NWAT55SRM1vESz4"
         }
       ],
       "services": {
