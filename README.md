@@ -1,4 +1,4 @@
-# 🛍️ **DOANFLUTTER** - E-Commerce App
+# 🛍️ **DOANFLUTTER** - SHOPEE App
 
 Một ứng dụng thương mại điện tử hiện đại được xây dựng bằng **Flutter**, lấy cảm hứng từ Shopee. Hỗ trợ mua sắm trực tuyến mượt mà trên cả **Android, iOS & Web**.
 
@@ -43,17 +43,3 @@ Một ứng dụng thương mại điện tử hiện đại được xây dựn
 -->
 
 ---
-
-## 🚀 **Cài đặt & Chạy ứng dụng**
-
-### Yêu cầu
-- Flutter SDK (phiên bản 3.0+)
-- Android Studio / Xcode
-- Firebase Project
-
-### Các bước
-
-1. **Clone repository**
-   ```bash
-   git clone https://github.com/thenhana2910/DoAnFlutter.git
-   cd DoAnFlutter
