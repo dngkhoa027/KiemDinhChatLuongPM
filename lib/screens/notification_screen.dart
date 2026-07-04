@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'cart_screen.dart';
 
 class ShopeeNotificationPage extends StatefulWidget {
   const ShopeeNotificationPage({super.key});
@@ -7,145 +8,122 @@ class ShopeeNotificationPage extends StatefulWidget {
   State<ShopeeNotificationPage> createState() => _ShopeeNotificationPageState();
 }
 
-class _ShopeeNotificationPageState extends State<ShopeeNotificationPage>
-    with SingleTickerProviderStateMixin {
+class _ShopeeNotificationPageState extends State<ShopeeNotificationPage> {
   static const Color shopeeOrange = Color(0xFFEE4D2D);
+  static const Color shopeeRed = Color(0xFFF53D2D);
+  static const Color teal = Color(0xFF17A398);
 
-  late TabController _tabController;
-  int _newIdCounter = 1000;
+  int _selectedTab = 0;
 
-  // ============== DATA: ĐƠN HÀNG (mutable để hỗ trợ vuốt xoá / làm mới) ==============
-  final List<Map<String, dynamic>> _orderNotis = [
+  // ============== DATA: 5 TAB ICON ==============
+  final List<Map<String, dynamic>> _tabs = const [
+    {"icon": Icons.thumb_up_alt_rounded, "label": "Thông báo nổi\nbật", "badgeCount": 10},
+    {"icon": Icons.local_offer_outlined, "label": "Khuyến mãi", "badgeDot": true},
+    {"icon": Icons.live_tv_outlined, "label": "Live, Video &\nThưởng", "badgeDot": true},
+    {"icon": Icons.account_balance_wallet_outlined, "label": "Thông tin Tài\nchính", "badgeDot": true},
+    {"icon": Icons.shopping_bag_outlined, "label": "Cập nhật\nShopee", "badgeDot": true},
+  ];
+
+  // ============== DATA: THÔNG BÁO NỔI BẬT (có banner freeship) ==============
+  final List<Map<String, dynamic>> _highlightNotis = const [
     {
-      "id": 1,
       "icon": Icons.local_shipping,
-      "color": const Color(0xFF2E9E5B),
-      "title": "Đơn hàng đã được giao thành công",
-      "subtitle": "Đơn hàng #SPE23456789 của bạn đã được giao. Hãy đánh giá sản phẩm để nhận 300 Shopee Xu.",
-      "time": "5 phút",
-      "unread": true,
+      "iconBg": teal,
+      "title": "Mã freeship cho đơn từ 0Đ có sẵn trong ví 😍",
+      "subtitle":
+          "⏰ Mã sẽ hết hạn vào 08-07-2026! Áp dụng cho đơn từ 0Đ🤑\n🛒 Voucher freeship có sẵn trong ví, dùng ngay kẻo lỡ!",
+      "hasBanner": true,
+      "secondaryLabel": "Dành cho bạn",
+      "time": "13:24 02-07-2026",
     },
     {
-      "id": 2,
-      "icon": Icons.local_shipping_outlined,
-      "color": shopeeOrange,
-      "title": "Đơn hàng đang được vận chuyển",
-      "subtitle": "Shopee Express đang giao đơn hàng #SPE23456700 đến bạn, dự kiến nhận trong 2 ngày tới.",
-      "time": "2 giờ",
-      "unread": true,
+      "icon": Icons.local_shipping,
+      "iconBg": teal,
+      "title": "⏰ Mau mau sử dụng mã freeship đơn từ 0Đ",
+      "subtitle":
+          "🛒 Nhanh tay kẻo lỡ mã freeship cho đơn từ 0Đ\n⏰ Mã sẽ hết hạn vào 30-06-2026! Số lượng có hạn.",
+      "hasBanner": true,
+      "secondaryLabel": "Sắp hết hạn",
+      "time": "13:45 29-06-2026",
     },
     {
-      "id": 3,
-      "icon": Icons.check_circle,
-      "color": const Color(0xFF2E9E5B),
-      "title": "Đơn hàng đã được xác nhận",
-      "subtitle": "Người bán đã xác nhận và đang chuẩn bị đơn hàng #SPE23456321 của bạn.",
-      "time": "1 ngày",
-      "unread": false,
-    },
-    {
-      "id": 4,
-      "icon": Icons.star,
-      "color": Colors.amber,
-      "title": "Đánh giá sản phẩm nhận Xu",
-      "subtitle": "Đánh giá 5 sản phẩm bạn vừa nhận để nhận ngay 500 Shopee Xu vào tài khoản.",
-      "time": "2 ngày",
-      "unread": false,
-    },
-  ];
-
-  // ============== DATA: NGƯỜI BÁN ==============
-  final List<Map<String, dynamic>> _sellerNotis = [
-    {
-      "id": 5,
-      "icon": Icons.storefront,
-      "color": const Color(0xFF1877F2),
-      "title": "ABC Official Store",
-      "subtitle": "Shop vừa gửi cho bạn 1 voucher giảm 20k, đơn tối thiểu 99k. Nhanh tay lưu lại!",
-      "time": "30 phút",
-      "unread": true,
-    },
-    {
-      "id": 6,
-      "icon": Icons.chat_bubble,
-      "color": const Color(0xFF1877F2),
-      "title": "Kho Sỉ Giá Tốt",
-      "subtitle": "Đã trả lời tin nhắn của bạn về đơn hàng #SPE23456111.",
-      "time": "3 giờ",
-      "unread": false,
-    },
-    {
-      "id": 7,
-      "icon": Icons.storefront,
-      "color": const Color(0xFF1877F2),
-      "title": "Deli Official Store",
-      "subtitle": "Shop đang có Flash Sale nội bộ giảm đến 50% cho tất cả sản phẩm văn phòng.",
-      "time": "1 ngày",
-      "unread": false,
-    },
-  ];
-
-  // ============== DATA: SHOPEE ==============
-  final List<Map<String, dynamic>> _shopeeNotis = [
-    {
-      "id": 8,
       "icon": Icons.campaign,
-      "color": shopeeOrange,
-      "title": "Flash Sale bắt đầu sau 2 giờ nữa!",
-      "subtitle": "Hàng ngàn sản phẩm giảm đến 50%. Đặt lời nhắc để không bỏ lỡ deal hot.",
-      "time": "10 phút",
-      "unread": true,
+      "iconBg": shopeeOrange,
+      "title": "📣 Bạn yêu ơi!",
+      "subtitle": "Shopee đang có chương trình ưu đãi cực lớn dành riêng cho bạn, đừng bỏ lỡ nhé!",
+      "hasBanner": false,
+      "time": "2 ngày trước",
     },
+  ];
+
+  // ============== DATA: KHUYẾN MÃI ==============
+  final List<Map<String, dynamic>> _promoNotis = const [
     {
-      "id": 9,
       "icon": Icons.card_giftcard,
-      "color": Colors.pinkAccent,
+      "iconBg": Colors.pinkAccent,
       "title": "Nhận ngay Voucher 50K cho đơn đầu tiên",
       "subtitle": "Áp dụng cho đơn hàng từ 0đ, nhập mã tại trang Voucher của tôi.",
-      "time": "6 giờ",
-      "unread": true,
+      "hasBanner": false,
+      "time": "6 giờ trước",
     },
     {
-      "id": 10,
-      "icon": Icons.monetization_on,
-      "color": Colors.orange,
-      "title": "Bạn nhận được 100 Shopee Xu",
-      "subtitle": "Cảm ơn bạn đã điểm danh 7 ngày liên tiếp trên Shopee.",
-      "time": "1 ngày",
-      "unread": false,
-    },
-    {
-      "id": 11,
-      "icon": Icons.privacy_tip_outlined,
-      "color": Colors.grey,
-      "title": "Cập nhật Chính Sách Bảo Mật",
-      "subtitle": "Shopee đã cập nhật chính sách bảo mật, vui lòng xem chi tiết để biết thêm thông tin.",
-      "time": "3 ngày",
-      "unread": false,
+      "icon": Icons.local_fire_department,
+      "iconBg": shopeeOrange,
+      "title": "Flash Sale bắt đầu sau 2 giờ nữa!",
+      "subtitle": "Hàng ngàn sản phẩm giảm đến 50%. Đặt lời nhắc để không bỏ lỡ deal hot.",
+      "hasBanner": false,
+      "time": "10 phút trước",
     },
   ];
 
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-    _tabController.addListener(() => setState(() {}));
-  }
+  // ============== DATA: LIVE, VIDEO & THƯỞNG ==============
+  final List<Map<String, dynamic>> _liveNotis = const [
+    {
+      "icon": Icons.videocam,
+      "iconBg": Color(0xFF9B51E0),
+      "title": "Phiên Live sắp bắt đầu!",
+      "subtitle": "Shop yêu thích của bạn sẽ Live sau 15 phút nữa, vào xem để nhận Xu ngay.",
+      "hasBanner": false,
+      "time": "15 phút trước",
+    },
+  ];
 
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
+  // ============== DATA: THÔNG TIN TÀI CHÍNH ==============
+  final List<Map<String, dynamic>> _financeNotis = const [
+    {
+      "icon": Icons.account_balance_wallet,
+      "iconBg": Color(0xFF2E9E5B),
+      "title": "Hoàn tiền vào ví ShopeePay",
+      "subtitle": "Bạn vừa được hoàn 15.000đ vào ví ShopeePay từ đơn hàng đã huỷ.",
+      "hasBanner": false,
+      "time": "1 ngày trước",
+    },
+  ];
+
+  // ============== DATA: CẬP NHẬT SHOPEE ==============
+  final List<Map<String, dynamic>> _systemNotis = const [
+    {
+      "icon": Icons.privacy_tip_outlined,
+      "iconBg": Colors.grey,
+      "title": "Cập nhật Chính Sách Bảo Mật",
+      "subtitle": "Shopee đã cập nhật chính sách bảo mật, vui lòng xem chi tiết để biết thêm thông tin.",
+      "hasBanner": false,
+      "time": "3 ngày trước",
+    },
+  ];
 
   List<Map<String, dynamic>> get _currentList {
-    switch (_tabController.index) {
+    switch (_selectedTab) {
       case 1:
-        return _sellerNotis;
+        return _promoNotis;
       case 2:
-        return _shopeeNotis;
+        return _liveNotis;
+      case 3:
+        return _financeNotis;
+      case 4:
+        return _systemNotis;
       default:
-        return _orderNotis;
+        return _highlightNotis;
     }
   }
 
@@ -153,16 +131,28 @@ class _ShopeeNotificationPageState extends State<ShopeeNotificationPage>
   Widget build(BuildContext context) {
     return Column(
       children: [
-        _buildTopBar(),
-        _buildTabBar(),
+        _buildTopBar(context),
         Expanded(
-          child: TabBarView(
-            controller: _tabController,
-            children: [
-              _buildList(_orderNotis),
-              _buildList(_sellerNotis),
-              _buildList(_shopeeNotis),
-            ],
+          child: RefreshIndicator(
+            color: shopeeOrange,
+            onRefresh: () async {
+              await Future.delayed(const Duration(milliseconds: 800));
+            },
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.zero,
+              children: [
+                _buildSectionHeader(),
+                _buildTabIconsRow(),
+                Container(height: 8, color: const Color(0xFFFDF3F1)),
+                ..._currentList.map((item) => Column(
+                      children: [
+                        _buildNotiCard(item),
+                        Divider(height: 1, color: Colors.grey.shade200),
+                      ],
+                    )),
+              ],
+            ),
           ),
         ),
       ],
@@ -170,253 +160,278 @@ class _ShopeeNotificationPageState extends State<ShopeeNotificationPage>
   }
 
   // ================= TOP BAR =================
-  Widget _buildTopBar() {
+  Widget _buildTopBar(BuildContext context) {
     return Container(
       color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+      child: Stack(
+        alignment: Alignment.center,
         children: [
           const Text(
-            "Thông Báo",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            "Thông báo",
+            style: TextStyle(fontSize: 21, fontWeight: FontWeight.w500, color: Colors.black87),
           ),
-          TextButton(
-            onPressed: () {
-              setState(() {
-                for (final item in _currentList) {
-                  item["unread"] = false;
-                }
-              });
-            },
-            style: TextButton.styleFrom(padding: EdgeInsets.zero),
-            child: const Row(
+          Positioned(
+            right: 0,
+            child: Row(
               children: [
-                Icon(Icons.done_all, size: 16, color: Colors.grey),
-                SizedBox(width: 4),
-                Text(
-                  "Đánh dấu đã đọc",
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ================= TAB BAR =================
-  Widget _buildTabBar() {
-    return Container(
-      color: Colors.white,
-      child: TabBar(
-        controller: _tabController,
-        indicatorColor: shopeeOrange,
-        indicatorWeight: 2.5,
-        labelColor: shopeeOrange,
-        unselectedLabelColor: Colors.black87,
-        labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-        unselectedLabelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.normal),
-        tabs: [
-          _buildTabItem(Icons.local_shipping_outlined, "Đơn Hàng", _unreadCount(_orderNotis)),
-          _buildTabItem(Icons.storefront_outlined, "Người Bán", _unreadCount(_sellerNotis)),
-          _buildTabItem(Icons.campaign_outlined, "Shopee", _unreadCount(_shopeeNotis)),
-        ],
-      ),
-    );
-  }
-
-  int _unreadCount(List<Map<String, dynamic>> items) {
-    return items.where((e) => e["unread"] == true).length;
-  }
-
-  Widget _buildTabItem(IconData icon, String label, int unread) {
-    return Tab(
-      height: 52,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 20),
-              const SizedBox(height: 3),
-              Text(label),
-            ],
-          ),
-          if (unread > 0)
-            Positioned(
-              right: -2,
-              top: -2,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                decoration: const BoxDecoration(
-                  color: shopeeOrange,
-                  shape: BoxShape.circle,
-                ),
-                constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                child: Text(
-                  "$unread",
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  // ================= LIST (kéo để làm mới + vuốt để xoá) =================
-  Widget _buildList(List<Map<String, dynamic>> items) {
-    return RefreshIndicator(
-      color: shopeeOrange,
-      onRefresh: () => _onRefresh(items),
-      child: items.isEmpty
-          ? ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              children: [
-                SizedBox(
-                  height: 420,
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.notifications_none, size: 64, color: Colors.grey.shade400),
-                        const SizedBox(height: 12),
-                        Text("Chưa có thông báo nào", style: TextStyle(color: Colors.grey.shade500)),
-                        const SizedBox(height: 4),
-                        Text("Kéo xuống để làm mới", style: TextStyle(color: Colors.grey.shade400, fontSize: 12)),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            )
-          : ListView.separated(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: EdgeInsets.zero,
-              itemCount: items.length,
-              separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey.shade200, indent: 14, endIndent: 14),
-              itemBuilder: (context, index) {
-                final item = items[index];
-                return Dismissible(
-                  key: ValueKey(item["id"]),
-                  direction: DismissDirection.endToStart,
-                  background: Container(
-                    color: Colors.red,
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.only(right: 22),
-                    child: const Icon(Icons.delete_outline, color: Colors.white, size: 26),
-                  ),
-                  onDismissed: (_) {
-                    final removed = item;
-                    setState(() {
-                      items.removeAt(index);
-                    });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text("Đã xoá thông báo"),
-                        duration: const Duration(seconds: 3),
-                        action: SnackBarAction(
-                          label: "Hoàn tác",
-                          textColor: Colors.yellow,
-                          onPressed: () {
-                            setState(() {
-                              items.insert(index, removed);
-                            });
-                          },
-                        ),
-                      ),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ShopeeCartPage()),
                     );
                   },
-                  child: _buildNotiTile(item),
-                );
-              },
+                  child: const Icon(Icons.shopping_cart_outlined, color: shopeeRed, size: 26),
+                ),
+                const SizedBox(width: 18),
+                const Icon(Icons.chat_bubble_outline, color: shopeeRed, size: 26),
+              ],
             ),
+          ),
+        ],
+      ),
     );
   }
 
-  Future<void> _onRefresh(List<Map<String, dynamic>> items) async {
-    await Future.delayed(const Duration(milliseconds: 900));
-    _newIdCounter++;
-    setState(() {
-      items.insert(0, {
-        "id": _newIdCounter,
-        "icon": Icons.notifications_active,
-        "color": shopeeOrange,
-        "title": "Bạn có thông báo mới",
-        "subtitle": "Danh sách thông báo vừa được cập nhật mới nhất cho bạn.",
-        "time": "Vừa xong",
-        "unread": true,
-      });
-    });
+  // ================= SECTION HEADER =================
+  Widget _buildSectionHeader() {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: const [
+          Text(
+            "Cập nhật mới nhất",
+            style: TextStyle(fontSize: 16.5, fontWeight: FontWeight.bold),
+          ),
+          Text(
+            "Đọc Tất Cả",
+            style: TextStyle(fontSize: 13, color: Colors.grey),
+          ),
+        ],
+      ),
+    );
   }
 
-  Widget _buildNotiTile(Map<String, dynamic> item) {
-    final bool unread = item["unread"] as bool;
+  // ================= TAB ICONS ROW =================
+  Widget _buildTabIconsRow() {
     return Container(
-      color: unread ? const Color(0xFFFFF4F0) : Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      color: Colors.white,
+      padding: const EdgeInsets.only(bottom: 12),
       child: Row(
+        children: List.generate(_tabs.length, (index) {
+          final t = _tabs[index];
+          final bool selected = index == _selectedTab;
+          final Color mainColor = selected ? shopeeOrange : Colors.black87;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _selectedTab = index),
+              behavior: HitTestBehavior.opaque,
+              child: Column(
+                children: [
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Icon(t["icon"] as IconData, size: 28, color: mainColor),
+                      if (t["badgeCount"] != null)
+                        Positioned(
+                          right: -8,
+                          top: -6,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                            constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                            decoration: const BoxDecoration(color: shopeeRed, shape: BoxShape.circle),
+                            child: Text(
+                              "${t["badgeCount"]}",
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        )
+                      else if (t["badgeDot"] == true)
+                        Positioned(
+                          right: -3,
+                          top: -3,
+                          child: Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(color: shopeeRed, shape: BoxShape.circle),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    t["label"] as String,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    style: TextStyle(
+                      fontSize: 11,
+                      height: 1.2,
+                      color: selected ? shopeeOrange : Colors.black87,
+                      fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    height: 2.5,
+                    width: 34,
+                    color: selected ? shopeeOrange : Colors.transparent,
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  // ================= NOTI CARD =================
+  Widget _buildNotiCard(Map<String, dynamic> item) {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(14, 16, 14, 16),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: item["color"] as Color,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(item["icon"] as IconData, color: Colors.white, size: 22),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: item["iconBg"] as Color,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(item["icon"] as IconData, color: Colors.white, size: 22),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Text(
-                        item["title"] as String,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 13.5,
-                          fontWeight: unread ? FontWeight.bold : FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
                     Text(
-                      item["time"] as String,
-                      style: const TextStyle(fontSize: 11, color: Colors.grey),
+                      item["title"] as String,
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, height: 1.3),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      item["subtitle"] as String,
+                      style: TextStyle(fontSize: 13.5, color: Colors.grey.shade700, height: 1.5),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  item["subtitle"] as String,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 12.5, color: Colors.grey.shade700, height: 1.3),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-          if (unread)
-            Padding(
-              padding: const EdgeInsets.only(left: 8, top: 4),
+          if (item["hasBanner"] == true) ...[
+            const SizedBox(height: 12),
+            _buildFreeshipBanner(item["secondaryLabel"] as String),
+            const SizedBox(height: 8),
+            Text(
+              item["time"] as String,
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+            ),
+          ] else ...[
+            const SizedBox(height: 8),
+            Text(
+              item["time"] as String,
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // ================= BANNER MÃ FREESHIP =================
+  Widget _buildFreeshipBanner(String secondaryLabel) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: SizedBox(
+        height: 150,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Bên trái: nền teal + icon xe tải
+            Expanded(
+              flex: 4,
               child: Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(color: shopeeOrange, shape: BoxShape.circle),
+                color: teal,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: const Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.local_shipping, color: Colors.white, size: 46),
+                    SizedBox(height: 10),
+                    Text(
+                      "Free\nShipping",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600, height: 1.3),
+                    ),
+                  ],
+                ),
               ),
             ),
-        ],
+            // Bên phải: nền trắng + nội dung
+            Expanded(
+              flex: 6,
+              child: Container(
+                color: Colors.white,
+                padding: const EdgeInsets.fromLTRB(12, 14, 10, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            "Bạn có mã Freeship\ncho đơn từ 0K!",
+                            style: TextStyle(fontSize: 16.5, fontWeight: FontWeight.w800, height: 1.25),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: shopeeRed),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            secondaryLabel,
+                            style: const TextStyle(color: shopeeRed, fontSize: 11.5, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: shopeeOrange,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text(
+                            "Dùng ngay!",
+                            style: TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
