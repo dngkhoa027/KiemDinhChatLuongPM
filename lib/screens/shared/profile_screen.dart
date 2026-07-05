@@ -1,5 +1,15 @@
 import 'package:flutter/material.dart';
-import 'cart_screen.dart';
+import '../buyer/cart_screen.dart';
+import 'settings_screen.dart';
+import 'personal_info_screen.dart';
+import '../seller/seller_register_screen.dart';
+import '../seller/seller_dashboard_screen.dart';
+import '../../widgets/role_gate.dart';
+import '../../models/user_model.dart';
+import '../../services/auth_service.dart';
+import '../../services/shop_service.dart';
+import '../../services/cart_service.dart';
+import '../../utils/avatar_utils.dart';
 
 class ShopeeProfilePage extends StatefulWidget {
   const ShopeeProfilePage({super.key});
@@ -15,11 +25,66 @@ class _ShopeeProfilePageState extends State<ShopeeProfilePage> {
 
   bool _showEmailVerify = true;
 
+  // ---- Thông tin thật lấy từ Firebase (thay cho tên/số cố định) ----
+  AppUser? _currentUser;
+  int _followingCount = 0;
+  bool _loadingProfile = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    final user = await AuthService.instance.fetchCurrentUser();
+    int followingCount = 0;
+    if (user != null) {
+      followingCount = await ShopService.instance.fetchFollowingCount(user.uid);
+    }
+    if (!mounted) return;
+    setState(() {
+      _currentUser = user;
+      _followingCount = followingCount;
+      _loadingProfile = false;
+    });
+  }
+
+  /// Tên hiển thị: ưu tiên "tên đăng nhập" (username, kiểu @thenhan_),
+  /// nếu chưa đặt thì hiển thị "họ và tên", cuối cùng mới rơi về mặc định.
+  String get _displayName {
+    final username = _currentUser?.username?.trim();
+    if (username != null && username.isNotEmpty) return username;
+    final name = _currentUser?.name.trim();
+    if (name != null && name.isNotEmpty) return name;
+    return "Người dùng Shopee";
+  }
+
+  // "Bắt đầu bán": nếu tài khoản đã là seller -> vào thẳng trang quản lý
+  // shop; nếu còn là buyer -> đưa tới form đăng ký kênh người bán.
+  // (RoleGate tự kiểm tra quyền qua AuthService, xem widgets/role_gate.dart)
+  void _openSellerChannel(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => RoleGate(
+          sellerBuilder: (context, user) => SellerDashboardScreen(shopId: user.shopId!),
+          buyerBuilder: (context) => const SellerRegisterScreen(),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
       color: bgGrey,
-      child: SingleChildScrollView(
+      // Cho phép kéo xuống để làm mới -> cập nhật lại số "Đang theo dõi"
+      // sau khi người dùng bấm theo dõi 1 shop ở màn hình khác rồi quay lại
+      // (tab Profile được giữ nguyên state nhờ IndexedStack nên không tự load lại).
+      child: RefreshIndicator(
+        color: shopeeOrange,
+        onRefresh: _loadProfile,
+        child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -42,6 +107,7 @@ class _ShopeeProfilePageState extends State<ShopeeProfilePage> {
             _buildRecommendSection(),
             const SizedBox(height: 20),
           ],
+        ),
         ),
       ),
     );
@@ -67,28 +133,39 @@ class _ShopeeProfilePageState extends State<ShopeeProfilePage> {
           // ---- Top bar: Bắt đầu bán + icons ----
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.storefront_outlined, size: 18, color: Colors.black87),
-                    const SizedBox(width: 6),
-                    const Text(
-                      "Bắt đầu bán",
-                      style: TextStyle(color: Colors.black87, fontSize: 13, fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(width: 4),
-                    const Icon(Icons.chevron_right, size: 16, color: Colors.black54),
-                  ],
+              GestureDetector(
+                onTap: () => _openSellerChannel(context),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.storefront_outlined, size: 18, color: Colors.black87),
+                      const SizedBox(width: 6),
+                      const Text(
+                        "Bắt đầu bán",
+                        style: TextStyle(color: Colors.black87, fontSize: 13, fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(Icons.chevron_right, size: 16, color: Colors.black54),
+                    ],
+                  ),
                 ),
               ),
               const Spacer(),
-              const Icon(Icons.settings_outlined, color: Colors.white, size: 24),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ShopeeSettingsPage()),
+                  );
+                },
+                child: const Icon(Icons.settings_outlined, color: Colors.white, size: 24),
+              ),
               const SizedBox(width: 18),
               GestureDetector(
                 onTap: () {
@@ -97,7 +174,36 @@ class _ShopeeProfilePageState extends State<ShopeeProfilePage> {
                     MaterialPageRoute(builder: (_) => const ShopeeCartPage()),
                   );
                 },
-                child: const Icon(Icons.shopping_cart_outlined, color: Colors.white, size: 24),
+                child: AnimatedBuilder(
+                  animation: CartService.instance,
+                  builder: (context, _) {
+                    final count = CartService.instance.totalItemCount;
+                    return Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        const Icon(Icons.shopping_cart_outlined, color: Colors.white, size: 24),
+                        if (count > 0)
+                          Positioned(
+                            right: -4,
+                            top: -4,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                              constraints: const BoxConstraints(minWidth: 16),
+                              decoration: BoxDecoration(
+                                color: Colors.yellow[700],
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                count > 99 ? '99+' : '$count',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                ),
               ),
               const SizedBox(width: 18),
               const Icon(Icons.chat_bubble_outline, color: Colors.white, size: 24),
@@ -108,7 +214,15 @@ class _ShopeeProfilePageState extends State<ShopeeProfilePage> {
           // ---- Avatar + name ----
           Row(
             children: [
-              Stack(
+              GestureDetector(
+                onTap: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const PersonalInfoScreen()),
+                  );
+                  _loadProfile();
+                },
+                child: Stack(
                 children: [
                   Container(
                     width: 66,
@@ -117,7 +231,19 @@ class _ShopeeProfilePageState extends State<ShopeeProfilePage> {
                       shape: BoxShape.circle,
                       color: Colors.white,
                     ),
-                    child: const Icon(Icons.person, size: 44, color: Colors.white70),
+                    child: ClipOval(
+                      child: SizedBox(
+                        width: 66,
+                        height: 66,
+                        child: () {
+                          final image = resolveAvatarImage(_currentUser?.avatarUrl);
+                          if (image != null) {
+                            return Image(image: image, fit: BoxFit.cover);
+                          }
+                          return const Icon(Icons.person, size: 44, color: Colors.white70);
+                        }(),
+                      ),
+                    ),
                   ),
                   Positioned(
                     right: 0,
@@ -134,6 +260,7 @@ class _ShopeeProfilePageState extends State<ShopeeProfilePage> {
                     ),
                   ),
                 ],
+                ),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -142,11 +269,11 @@ class _ShopeeProfilePageState extends State<ShopeeProfilePage> {
                   children: [
                     Row(
                       children: [
-                        const Flexible(
+                        Flexible(
                           child: Text(
-                            "23.thnhn",
+                            _loadingProfile ? "Đang tải..." : _displayName,
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
@@ -162,12 +289,12 @@ class _ShopeeProfilePageState extends State<ShopeeProfilePage> {
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
-                            children: const [
+                            children: [
                               Text(
-                                "Thành viên",
-                                style: TextStyle(color: shopeeOrange, fontSize: 11.5, fontWeight: FontWeight.w600),
+                                _currentUser?.membershipTier ?? "Thành viên",
+                                style: const TextStyle(color: shopeeOrange, fontSize: 11.5, fontWeight: FontWeight.w600),
                               ),
-                              Icon(Icons.chevron_right, size: 13, color: shopeeOrange),
+                              const Icon(Icons.chevron_right, size: 13, color: shopeeOrange),
                             ],
                           ),
                         ),
@@ -175,10 +302,13 @@ class _ShopeeProfilePageState extends State<ShopeeProfilePage> {
                     ),
                     const SizedBox(height: 8),
                     Row(
-                      children: const [
-                        Text("0 Người theo", style: TextStyle(color: Colors.white, fontSize: 12.5)),
-                        SizedBox(width: 14),
-                        Text("3 Đang theo dõi", style: TextStyle(color: Colors.white, fontSize: 12.5)),
+                      children: [
+                        const Text("0 Người theo", style: TextStyle(color: Colors.white, fontSize: 12.5)),
+                        const SizedBox(width: 14),
+                        Text(
+                          "$_followingCount Đang theo dõi",
+                          style: const TextStyle(color: Colors.white, fontSize: 12.5),
+                        ),
                       ],
                     ),
                   ],

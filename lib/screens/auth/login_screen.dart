@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'register_screen.dart';
-import 'home_screen.dart';
+import '../buyer/home_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../services/auth_service.dart';
 
 class ShopeeLoginPage extends StatefulWidget {
   const ShopeeLoginPage({super.key});
@@ -69,24 +70,10 @@ class _ShopeeLoginPageState extends State<ShopeeLoginPage>
 
       setState(() => _isLoading = true);
 
-      String input = _phoneController.text.trim();
-
-      String email;
-
-      if (input.contains('@')) {
-
-        email = input;
-
-      } else {
-
-        email = '${input}@app.com';
-      }
-
-      await FirebaseAuth.instance
-          .signInWithEmailAndPassword(
-
-        email: email,
-
+      // Đăng nhập qua AuthService (dùng chung logic chuẩn hoá email/số điện
+      // thoại với màn hình đăng ký) thay vì gọi FirebaseAuth trực tiếp ở đây.
+      await AuthService.instance.login(
+        emailOrPhone: _phoneController.text,
         password: _passwordController.text.trim(),
       );
 

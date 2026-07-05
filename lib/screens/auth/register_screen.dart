@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../services/auth_service.dart';
 
 // ─── Màu chủ đạo (dùng chung với login) ──────────────────────────────────────
 const Color shopeeOrange = Color(0xFFEE4D2D);
@@ -128,39 +128,14 @@ class _ShopeeRegisterPageState extends State<ShopeeRegisterPage>
 
       setState(() => _isLoading = true);
 
-      String input = _phoneController.text.trim();
-
-String email;
-
-if (input.contains('@')) {
-
-  email = input;
-
-} else {
-
-  email = '${input}@app.com';
-}
-UserCredential userCredential =
-    await FirebaseAuth.instance
-        .createUserWithEmailAndPassword(
-
-  email: email,
-
-  password: _passwordController.text.trim(),
-);
-
-      // Lưu dữ liệu user lên Firestore
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userCredential.user!.uid)
-          .set({
-
-        'name': _nameController.text.trim(),
-
-        'email': _phoneController.text.trim(),
-
-        'createdAt': Timestamp.now(),
-      });
+      // Đăng ký qua AuthService: vừa tạo tài khoản Firebase Auth, vừa tạo
+      // document `users/{uid}` với role mặc định `buyer` -> đồng bộ với hệ
+      // thống phân quyền dùng chung cho toàn app (xem services/auth_service.dart).
+      await AuthService.instance.register(
+        name: _nameController.text.trim(),
+        emailOrPhone: _phoneController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
 
       setState(() => _isLoading = false);
 

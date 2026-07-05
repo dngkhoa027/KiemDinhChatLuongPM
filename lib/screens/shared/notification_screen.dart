@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'cart_screen.dart';
+import '../buyer/cart_screen.dart';
+import '../../data/mock_data.dart';
+import '../../services/cart_service.dart';
 
 class ShopeeNotificationPage extends StatefulWidget {
   const ShopeeNotificationPage({super.key});
@@ -16,101 +18,23 @@ class _ShopeeNotificationPageState extends State<ShopeeNotificationPage> {
   int _selectedTab = 0;
 
   // ============== DATA: 5 TAB ICON ==============
-  final List<Map<String, dynamic>> _tabs = const [
-    {"icon": Icons.thumb_up_alt_rounded, "label": "Thông báo nổi\nbật", "badgeCount": 10},
-    {"icon": Icons.local_offer_outlined, "label": "Khuyến mãi", "badgeDot": true},
-    {"icon": Icons.live_tv_outlined, "label": "Live, Video &\nThưởng", "badgeDot": true},
-    {"icon": Icons.account_balance_wallet_outlined, "label": "Thông tin Tài\nchính", "badgeDot": true},
-    {"icon": Icons.shopping_bag_outlined, "label": "Cập nhật\nShopee", "badgeDot": true},
-  ];
+  // Dữ liệu lấy từ lib/data/mock_data.dart -> sau này thay bằng API tại đây
+  final List<Map<String, dynamic>> _tabs = MockData.notificationTabs;
 
   // ============== DATA: THÔNG BÁO NỔI BẬT (có banner freeship) ==============
-  final List<Map<String, dynamic>> _highlightNotis = const [
-    {
-      "icon": Icons.local_shipping,
-      "iconBg": teal,
-      "title": "Mã freeship cho đơn từ 0Đ có sẵn trong ví 😍",
-      "subtitle":
-          "⏰ Mã sẽ hết hạn vào 08-07-2026! Áp dụng cho đơn từ 0Đ🤑\n🛒 Voucher freeship có sẵn trong ví, dùng ngay kẻo lỡ!",
-      "hasBanner": true,
-      "secondaryLabel": "Dành cho bạn",
-      "time": "13:24 02-07-2026",
-    },
-    {
-      "icon": Icons.local_shipping,
-      "iconBg": teal,
-      "title": "⏰ Mau mau sử dụng mã freeship đơn từ 0Đ",
-      "subtitle":
-          "🛒 Nhanh tay kẻo lỡ mã freeship cho đơn từ 0Đ\n⏰ Mã sẽ hết hạn vào 30-06-2026! Số lượng có hạn.",
-      "hasBanner": true,
-      "secondaryLabel": "Sắp hết hạn",
-      "time": "13:45 29-06-2026",
-    },
-    {
-      "icon": Icons.campaign,
-      "iconBg": shopeeOrange,
-      "title": "📣 Bạn yêu ơi!",
-      "subtitle": "Shopee đang có chương trình ưu đãi cực lớn dành riêng cho bạn, đừng bỏ lỡ nhé!",
-      "hasBanner": false,
-      "time": "2 ngày trước",
-    },
-  ];
+  final List<Map<String, dynamic>> _highlightNotis = MockData.notificationHighlight;
 
   // ============== DATA: KHUYẾN MÃI ==============
-  final List<Map<String, dynamic>> _promoNotis = const [
-    {
-      "icon": Icons.card_giftcard,
-      "iconBg": Colors.pinkAccent,
-      "title": "Nhận ngay Voucher 50K cho đơn đầu tiên",
-      "subtitle": "Áp dụng cho đơn hàng từ 0đ, nhập mã tại trang Voucher của tôi.",
-      "hasBanner": false,
-      "time": "6 giờ trước",
-    },
-    {
-      "icon": Icons.local_fire_department,
-      "iconBg": shopeeOrange,
-      "title": "Flash Sale bắt đầu sau 2 giờ nữa!",
-      "subtitle": "Hàng ngàn sản phẩm giảm đến 50%. Đặt lời nhắc để không bỏ lỡ deal hot.",
-      "hasBanner": false,
-      "time": "10 phút trước",
-    },
-  ];
+  final List<Map<String, dynamic>> _promoNotis = MockData.notificationPromo;
 
   // ============== DATA: LIVE, VIDEO & THƯỞNG ==============
-  final List<Map<String, dynamic>> _liveNotis = const [
-    {
-      "icon": Icons.videocam,
-      "iconBg": Color(0xFF9B51E0),
-      "title": "Phiên Live sắp bắt đầu!",
-      "subtitle": "Shop yêu thích của bạn sẽ Live sau 15 phút nữa, vào xem để nhận Xu ngay.",
-      "hasBanner": false,
-      "time": "15 phút trước",
-    },
-  ];
+  final List<Map<String, dynamic>> _liveNotis = MockData.notificationLive;
 
   // ============== DATA: THÔNG TIN TÀI CHÍNH ==============
-  final List<Map<String, dynamic>> _financeNotis = const [
-    {
-      "icon": Icons.account_balance_wallet,
-      "iconBg": Color(0xFF2E9E5B),
-      "title": "Hoàn tiền vào ví ShopeePay",
-      "subtitle": "Bạn vừa được hoàn 15.000đ vào ví ShopeePay từ đơn hàng đã huỷ.",
-      "hasBanner": false,
-      "time": "1 ngày trước",
-    },
-  ];
+  final List<Map<String, dynamic>> _financeNotis = MockData.notificationFinance;
 
   // ============== DATA: CẬP NHẬT SHOPEE ==============
-  final List<Map<String, dynamic>> _systemNotis = const [
-    {
-      "icon": Icons.privacy_tip_outlined,
-      "iconBg": Colors.grey,
-      "title": "Cập nhật Chính Sách Bảo Mật",
-      "subtitle": "Shopee đã cập nhật chính sách bảo mật, vui lòng xem chi tiết để biết thêm thông tin.",
-      "hasBanner": false,
-      "time": "3 ngày trước",
-    },
-  ];
+  final List<Map<String, dynamic>> _systemNotis = MockData.notificationSystem;
 
   List<Map<String, dynamic>> get _currentList {
     switch (_selectedTab) {
@@ -161,35 +85,82 @@ class _ShopeeNotificationPageState extends State<ShopeeNotificationPage> {
 
   // ================= TOP BAR =================
   Widget _buildTopBar(BuildContext context) {
+    // Lưu ý: trước đây dùng Stack đặt trực tiếp trong Container không có
+    // width tường minh -> Stack chỉ co lại bằng đúng kích thước chữ
+    // "Thông báo" (child không Positioned duy nhất), khiến Positioned(right:0)
+    // tính theo bề rộng đó và đẩy icon đè lên ngay sát chữ.
+    // Cách sửa: bọc width: double.infinity cho Container ngoài cùng và
+    // SizedBox full width cho Stack để Stack thực sự rộng bằng cả hàng,
+    // từ đó Positioned(right: 0) mới nằm đúng ở mép phải màn hình.
     return Container(
+      width: double.infinity,
       color: Colors.white,
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          const Text(
-            "Thông báo",
-            style: TextStyle(fontSize: 21, fontWeight: FontWeight.w500, color: Colors.black87),
-          ),
-          Positioned(
-            right: 0,
-            child: Row(
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const ShopeeCartPage()),
-                    );
-                  },
-                  child: const Icon(Icons.shopping_cart_outlined, color: shopeeRed, size: 26),
-                ),
-                const SizedBox(width: 18),
-                const Icon(Icons.chat_bubble_outline, color: shopeeRed, size: 26),
-              ],
+      child: SizedBox(
+        width: double.infinity,
+        height: 28,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            const Center(
+              child: Text(
+                "Thông báo",
+                style: TextStyle(fontSize: 21, fontWeight: FontWeight.w500, color: Colors.black87),
+              ),
             ),
-          ),
-        ],
+            Positioned(
+              right: 0,
+              top: 0,
+              bottom: 0,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const ShopeeCartPage()),
+                      );
+                    },
+                    child: AnimatedBuilder(
+                      animation: CartService.instance,
+                      builder: (context, _) {
+                        final count = CartService.instance.totalItemCount;
+                        return Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            const Icon(Icons.shopping_cart_outlined, color: shopeeRed, size: 26),
+                            if (count > 0)
+                              Positioned(
+                                right: -4,
+                                top: -4,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                  constraints: const BoxConstraints(minWidth: 16),
+                                  decoration: BoxDecoration(
+                                    color: shopeeRed,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: Colors.white, width: 1),
+                                  ),
+                                  child: Text(
+                                    count > 99 ? '99+' : '$count',
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 18),
+                  const Icon(Icons.chat_bubble_outline, color: shopeeRed, size: 26),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

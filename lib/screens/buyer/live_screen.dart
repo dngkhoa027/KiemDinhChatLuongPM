@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../data/mock_data.dart';
 
 class ShopeeLivePage extends StatefulWidget {
   const ShopeeLivePage({super.key});
@@ -12,68 +13,10 @@ class _ShopeeLivePageState extends State<ShopeeLivePage> {
   static const Color liveRed = Color(0xFFFF424F);
 
   int _selectedFilter = 0;
-  final List<String> _filters = const ["Dành Cho Bạn", "Thời Trang", "Làm Đẹp", "Điện Tử", "Ẩm Thực"];
+  final List<String> _filters = MockData.liveFilters;
 
   // ============== DATA: LIVESTREAMS ==============
-  final List<Map<String, dynamic>> _liveStreams = const [
-    {
-      "thumb": "https://picsum.photos/id/1027/400/560",
-      "shop": "beauty.official",
-      "title": "SALE SỐC 50% Mỹ Phẩm Chính Hãng",
-      "viewers": "12,4k",
-      "price": "89.000",
-    },
-    {
-      "thumb": "https://picsum.photos/id/1011/400/560",
-      "shop": "sneaker_hub",
-      "title": "Giày Thể Thao Giảm Đến 60%",
-      "viewers": "8,2k",
-      "price": "259.000",
-    },
-    {
-      "thumb": "https://picsum.photos/id/1005/400/560",
-      "shop": "tech.zone",
-      "title": "Mở Hộp Điện Thoại Mới Nhất",
-      "viewers": "20,1k",
-      "price": "4.990.000",
-    },
-    {
-      "thumb": "https://picsum.photos/id/1013/400/560",
-      "shop": "mom_and_baby",
-      "title": "Đồ Sơ Sinh Giá Sốc Cuối Tuần",
-      "viewers": "3,6k",
-      "price": "45.000",
-    },
-    {
-      "thumb": "https://picsum.photos/id/1025/400/560",
-      "shop": "home.living.vn",
-      "title": "Đồ Gia Dụng Thông Minh Cho Bếp",
-      "viewers": "5,9k",
-      "price": "329.000",
-    },
-    {
-      "thumb": "https://picsum.photos/id/1035/400/560",
-      "shop": "fashion.style",
-      "title": "Thời Trang Thu Đông Mới Về",
-      "viewers": "15,7k",
-      "price": "179.000",
-    },
-    {
-      "thumb": "https://picsum.photos/id/1041/400/560",
-      "shop": "sport.gear",
-      "title": "Dụng Cụ Tập Gym Tại Nhà",
-      "viewers": "2,1k",
-      "price": "199.000",
-    },
-    {
-      "thumb": "https://picsum.photos/id/1043/400/560",
-      "shop": "pet.corner",
-      "title": "Phụ Kiện Thú Cưng Giá Tốt",
-      "viewers": "1,8k",
-      "price": "59.000",
-    },
-  ];
-
+  final List<Map<String, dynamic>> _liveStreams = MockData.liveStreams;
   @override
   Widget build(BuildContext context) {
     return Scaffold(

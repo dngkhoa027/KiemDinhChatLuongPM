@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 import 'firebase_options.dart';
-import 'screens/login_screen.dart';
+import 'screens/auth/login_screen.dart';
 
 void main() async {
 
@@ -30,6 +30,9 @@ class ShopeeApp extends StatelessWidget {
           seedColor: const Color(0xFFEE4D2D),
         ),
         useMaterial3: true,
+        appBarTheme: const AppBarTheme(
+          surfaceTintColor: Colors.transparent,
+        ),
       ),
 
       home: const ShopeeLoginPage(),

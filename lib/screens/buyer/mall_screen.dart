@@ -1,6 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'cart_screen.dart';
+import 'product_detail_screen.dart';
+import '../../data/mock_data.dart';
+import '../../models/product_model.dart';
+import '../../services/product_api_service.dart';
+import '../../services/cart_service.dart';
 
 class ShopeeMallPage extends StatefulWidget {
   const ShopeeMallPage({super.key});
@@ -19,311 +24,30 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
   Timer? _bannerTimer;
 
   // ============== BANNER CHÍNH (7.7) ==============
-  final List<Map<String, dynamic>> _mainBanners = const [
-    {
-      "tag": "lazychef",
-      "title1": "BẾP THÀNH THƠI",
-      "title2": "VỊ HẠNH PHÚC",
-      "date": "DUY NHẤT: 04/07 – 07/07",
-      "voucher": "300.000",
-      "discount": "45%",
-      "gift": "500.000",
-      "image": "https://picsum.photos/id/292/500/500",
-    },
-    {
-      "tag": "OPPO",
-      "title1": "CÔNG NGHỆ ĐỈNH CAO",
-      "title2": "GIÁ SỐC NGÀY VÀNG",
-      "date": "DUY NHẤT: 04/07 – 07/07",
-      "voucher": "200.000",
-      "discount": "30%",
-      "gift": "300.000",
-      "image": "https://picsum.photos/id/160/500/500",
-    },
-    {
-      "tag": "L'Oréal",
-      "title1": "RỰC RỠ SẮC XINH",
-      "title2": "ƯU ĐÃI NGẬP TRÀN",
-      "date": "DUY NHẤT: 04/07 – 07/07",
-      "voucher": "150.000",
-      "discount": "50%",
-      "gift": "200.000",
-      "image": "https://picsum.photos/id/119/500/500",
-    },
-  ];
+  // Dữ liệu lấy từ lib/data/mock_data.dart -> sau này thay bằng API tại đây
+  final List<Map<String, dynamic>> _mainBanners = MockData.mallMainBanners;
 
   // ============== HÀNG ICON TIỆN ÍCH ==============
-  final List<Map<String, dynamic>> _quickIcons = const [
-    {"icon": Icons.diamond, "color": Color(0xFFFFC107), "label": "SHOPEE\nPREMIUM"},
-    {"icon": Icons.shopping_bag, "color": Color(0xFFEE4D2D), "label": "SĂN DEAL SIÊU\nHOT"},
-    {"icon": Icons.emoji_events, "color": Color(0xFFFF7A00), "label": "THƯƠNG HIỆU\nMỚI LÊN SÀN"},
-    {"icon": Icons.public, "color": Color(0xFFEE2E24), "label": "THƯƠNG HIỆU\nQUỐC TẾ"},
-    {"icon": Icons.bolt, "color": Color(0xFF222222), "label": "FLASH SALE"},
-  ];
+  final List<Map<String, dynamic>> _quickIcons = MockData.mallQuickIcons;
 
   // ============== DANH MỤC ==============
-  final List<Map<String, dynamic>> _categories = const [
-    {"image": "https://picsum.photos/id/1074/200/200", "label": "Thể Thao & Du Lịch"},
-    {"image": "https://picsum.photos/id/1071/200/200", "label": "Ô Tô & Xe Máy & Xe Đạp"},
-    {"image": "https://picsum.photos/id/1080/200/200", "label": "Bách Hóa Online"},
-    {"image": "https://picsum.photos/id/312/200/200", "label": "Nhà Cửa & Đời Sống"},
-    {"image": "https://picsum.photos/id/26/200/200", "label": "Sắc Đẹp"},
-    {"image": "https://picsum.photos/id/48/200/200", "label": "Mẹ & Bé"},
-  ];
+  final List<Map<String, dynamic>> _categories = MockData.mallCategories;
 
-  // ============== DÃY SẢN PHẨM VOUCHER XTRA (ngang) ==============
-  final List<Map<String, dynamic>> _flashRow = const [
-    {
-      "image": "https://picsum.photos/id/24/300/300",
-      "title": "Combo 5/10/20 Bút gel Minimalist Thiên Long",
-      "discount": 37,
-    },
-    {
-      "image": "https://picsum.photos/id/367/300/300",
-      "title": "Tai nghe bluetooth Soundcore R50i NC | Chính hãng",
-      "discount": 44,
-    },
-    {
-      "image": "https://picsum.photos/id/103/300/300",
-      "title": "Máy Xay Đa Năng Cầm Tay Bear Chính Hãng",
-      "discount": 40,
-    },
-  ];
+  // ============== ƯU ĐÃI SHOPEE MALL (voucher thương hiệu, không phải sản phẩm) ==============
+  final List<Map<String, dynamic>> _brandVouchers = MockData.mallBrandVouchers;
 
-  // ============== KHỐI "MUA ĐỂ NHẬN QUÀ" ==============
-  final List<Map<String, dynamic>> _giftProducts = const [
-    {
-      "image": "https://picsum.photos/id/1025/300/300",
-      "title": "Sách - Bộ 6 cuốn THƯ VIỆN HÌNH ẢNH song ngữ Anh Việt",
-      "discount": 41,
-      "price": "35.000",
-      "hasGift": true,
-    },
-    {
-      "image": "https://picsum.photos/id/1060/300/300",
-      "title": "Khăn Tắm, Khăn Gội Đầu, Khăn Lau Mặt Cotton",
-      "discount": 80,
-      "price": "6.900",
-      "hasGift": true,
-    },
-    {
-      "image": "https://picsum.photos/id/1076/300/300",
-      "title": "Mũ Bảo Hiểm Dáng Nửa Đầu TRAI NAM/NỮ",
-      "discount": 0,
-      "price": "122.760",
-      "hasGift": false,
-    },
-  ];
-
-  // ============== ƯU ĐÃI SHOPEE MALL (voucher thương hiệu) ==============
-  final List<Map<String, dynamic>> _brandVouchers = const [
-    {
-      "logo": "https://picsum.photos/id/201/120/120",
-      "name": "LIXIBOX\nOFFICIAL STORE",
-      "percent": "giảm 20%",
-      "condition": "Giảm tối đa 350k đ\nĐơn tối thiểu 1,2tr đ",
-    },
-    {
-      "logo": "https://picsum.photos/id/64/120/120",
-      "name": "Abib Official\nStore",
-      "percent": "giảm 10%",
-      "condition": "Giảm tối đa 15k đ Đơn\ntối thiểu 150k đ",
-    },
-    {
-      "logo": "https://picsum.photos/id/96/120/120",
-      "name": "OPPO Official\nStore",
-      "percent": "giảm 5%",
-      "condition": "Giảm tối đa 50k đ Đơn\ntối thiểu 500k đ",
-    },
-    {
-      "logo": "https://picsum.photos/id/292/120/120",
-      "name": "LazyChef\nVietNam",
-      "percent": "giảm 7%",
-      "condition": "Giảm tối đa 30k đ Đơn\ntối thiểu 400k đ",
-    },
-    {
-      "logo": "https://picsum.photos/id/312/120/120",
-      "name": "Vinamilk\nOfficial Store",
-      "percent": "giảm 3%",
-      "condition": "Giảm tối đa 20k đ Đơn\ntối thiểu 200k đ",
-    },
-    {
-      "logo": "https://picsum.photos/id/342/120/120",
-      "name": "Samsung\nOfficial Store",
-      "percent": "giảm 8%",
-      "condition": "Giảm tối đa 400k đ Đơn\ntối thiểu 3tr đ",
-    },
-  ];
-
-  // ============== LƯỚI SẢN PHẨM CHÍNH (sau ưu đãi) ==============
-  final List<Map<String, dynamic>> _products = const [
-    {
-      "image": "https://picsum.photos/id/250/300/300",
-      "title": "[Chính Hãng] Sữa rửa mặt CeraVe làm sạch da dầu mụn",
-      "price": "215.000",
-      "originalPrice": "320.000",
-      "discount": 33,
-      "sold": "8,2k",
-      "rating": 4.9,
-    },
-    {
-      "image": "https://picsum.photos/id/160/300/300",
-      "title": "Tai nghe Sony WH-CH520 chính hãng bảo hành 12 tháng",
-      "price": "890.000",
-      "originalPrice": "1.290.000",
-      "discount": 31,
-      "sold": "1,5k",
-      "rating": 5.0,
-    },
-    {
-      "image": "https://picsum.photos/id/338/300/300",
-      "title": "Áo khoác Uniqlo phối mũ chống nắng chính hãng",
-      "price": "459.000",
-      "originalPrice": "690.000",
-      "discount": 33,
-      "sold": "3,1k",
-      "rating": 4.8,
-    },
-    {
-      "image": "https://picsum.photos/id/431/300/300",
-      "title": "Nồi chiên không dầu Philips 4.1L chính hãng",
-      "price": "1.590.000",
-      "originalPrice": "2.190.000",
-      "discount": 27,
-      "sold": "620",
-      "rating": 4.9,
-    },
-    {
-      "image": "https://picsum.photos/id/435/300/300",
-      "title": "Sữa bột Nan Optipro số 3 hộp 1.5kg",
-      "price": "545.000",
-      "originalPrice": "620.000",
-      "discount": 12,
-      "sold": "990",
-      "rating": 5.0,
-    },
-    {
-      "image": "https://picsum.photos/id/119/300/300",
-      "title": "Kem chống nắng Anessa chính hãng Nhật Bản SPF50+",
-      "price": "455.000",
-      "originalPrice": "550.000",
-      "discount": 17,
-      "sold": "2,4k",
-      "rating": 4.9,
-    },
-    {
-      "image": "https://picsum.photos/id/145/300/300",
-      "title": "Bàn phím cơ Logitech G Pro X chính hãng",
-      "price": "1.990.000",
-      "originalPrice": "2.590.000",
-      "discount": 23,
-      "sold": "540",
-      "rating": 4.9,
-    },
-    {
-      "image": "https://picsum.photos/id/96/300/300",
-      "title": "Nước hoa hồng Hada Labo dưỡng ẩm chuyên sâu 170ml",
-      "price": "175.000",
-      "originalPrice": "230.000",
-      "discount": 24,
-      "sold": "6,7k",
-      "rating": 4.8,
-    },
-    {
-      "image": "https://picsum.photos/id/312/300/300",
-      "title": "Máy lọc không khí Xiaomi Smart Air Purifier 4",
-      "price": "2.390.000",
-      "originalPrice": "2.990.000",
-      "discount": 20,
-      "sold": "310",
-      "rating": 4.9,
-    },
-    {
-      "image": "https://picsum.photos/id/342/300/300",
-      "title": "Điện thoại Samsung Galaxy A16 chính hãng",
-      "price": "3.990.000",
-      "originalPrice": "4.590.000",
-      "discount": 13,
-      "sold": "1,2k",
-      "rating": 4.9,
-    },
-    {
-      "image": "https://picsum.photos/id/24/300/300",
-      "title": "Combo 5 bút gel Thiên Long Minimalist mực xanh/đen",
-      "price": "45.000",
-      "originalPrice": "72.000",
-      "discount": 37,
-      "sold": "4,3k",
-      "rating": 4.9,
-    },
-    {
-      "image": "https://picsum.photos/id/367/300/300",
-      "title": "Tai nghe Bluetooth Soundcore R50i NC chống ồn",
-      "price": "579.000",
-      "originalPrice": "1.034.000",
-      "discount": 44,
-      "sold": "980",
-      "rating": 4.8,
-    },
-    {
-      "image": "https://picsum.photos/id/1025/300/300",
-      "title": "Bộ 6 cuốn sách song ngữ Anh Việt cho bé 0-3 tuổi",
-      "price": "35.000",
-      "originalPrice": "59.000",
-      "discount": 41,
-      "sold": "2,1k",
-      "rating": 5.0,
-    },
-    {
-      "image": "https://picsum.photos/id/1060/300/300",
-      "title": "Bộ khăn tắm khăn gội cotton cao cấp Lotus Towel",
-      "price": "129.000",
-      "originalPrice": "645.000",
-      "discount": 80,
-      "sold": "3,7k",
-      "rating": 4.9,
-    },
-    {
-      "image": "https://picsum.photos/id/1076/300/300",
-      "title": "Mũ bảo hiểm dáng nửa đầu thời trang nam nữ",
-      "price": "122.760",
-      "originalPrice": "189.000",
-      "discount": 35,
-      "sold": "756",
-      "rating": 4.7,
-    },
-    {
-      "image": "https://picsum.photos/id/431/300/300",
-      "title": "Máy ép chậm đa năng Lazychef công suất lớn",
-      "price": "890.000",
-      "originalPrice": "1.590.000",
-      "discount": 44,
-      "sold": "412",
-      "rating": 4.9,
-    },
-    {
-      "image": "https://picsum.photos/id/106/300/300",
-      "title": "Son kem lì Merzy chính hãng Hàn Quốc nhiều màu",
-      "price": "189.000",
-      "originalPrice": "259.000",
-      "discount": 27,
-      "sold": "5,9k",
-      "rating": 4.9,
-    },
-    {
-      "image": "https://picsum.photos/id/1078/300/300",
-      "title": "Giày thể thao nam nữ Skechers chính hãng êm ái",
-      "price": "990.000",
-      "originalPrice": "1.590.000",
-      "discount": 38,
-      "sold": "830",
-      "rating": 4.8,
-    },
-  ];
+  // ============== SẢN PHẨM (lấy từ API DummyJSON - KHÔNG dùng mock nữa) ==============
+  // Dùng skip khác với Home để không hiển thị trùng sản phẩm giữa 2 màn hình.
+  List<Product> _flashRow = [];
+  List<Product> _giftProducts = [];
+  List<Product> _products = [];
+  bool _loadingProducts = true;
+  String? _productsError;
 
   @override
   void initState() {
     super.initState();
+    _loadMallProducts();
     _bannerTimer = Timer.periodic(const Duration(seconds: 3), (_) {
       if (!mounted) return;
       _bannerIndex = (_bannerIndex + 1) % _mainBanners.length;
@@ -333,6 +57,36 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
         curve: Curves.easeInOut,
       );
     });
+  }
+
+  // Lấy 3 nhóm sản phẩm từ API DummyJSON, mỗi nhóm dùng "skip" riêng và
+  // KHÁC với Home (Home dùng skip 0-9) để tránh hiển thị trùng sản phẩm
+  // giữa 2 màn hình.
+  Future<void> _loadMallProducts() async {
+    setState(() {
+      _loadingProducts = true;
+      _productsError = null;
+    });
+    try {
+      final results = await Future.wait([
+        ProductApiService.fetchProducts(limit: 3, skip: 9), // dãy voucher xtra
+        ProductApiService.fetchProducts(limit: 3, skip: 12), // mua để nhận quà
+        ProductApiService.fetchProducts(limit: 16, skip: 15), // lưới sản phẩm chính
+      ]);
+      if (!mounted) return;
+      setState(() {
+        _flashRow = results[0];
+        _giftProducts = results[1];
+        _products = results[2];
+        _loadingProducts = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _productsError = 'Không thể tải sản phẩm. Vui lòng kiểm tra kết nối mạng.';
+        _loadingProducts = false;
+      });
+    }
   }
 
   @override
@@ -428,7 +182,36 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
                     MaterialPageRoute(builder: (_) => const ShopeeCartPage()),
                   );
                 },
-                child: const Icon(Icons.shopping_cart_outlined, color: Colors.white, size: 25),
+                child: AnimatedBuilder(
+                  animation: CartService.instance,
+                  builder: (context, _) {
+                    final count = CartService.instance.totalItemCount;
+                    return Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        const Icon(Icons.shopping_cart_outlined, color: Colors.white, size: 25),
+                        if (count > 0)
+                          Positioned(
+                            right: -4,
+                            top: -4,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                              constraints: const BoxConstraints(minWidth: 16),
+                              decoration: BoxDecoration(
+                                color: Colors.yellow[700],
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                count > 99 ? '99+' : '$count',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                ),
               ),
             ],
           ),
@@ -842,6 +625,14 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
 
   // ================= FLASH ROW (voucher xtra) =================
   Widget _buildFlashRow() {
+    if (_flashRow.isEmpty) {
+      return _loadingProducts
+          ? const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Center(child: CircularProgressIndicator(color: mallRed)),
+            )
+          : const SizedBox.shrink();
+    }
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.symmetric(vertical: 10),
@@ -854,7 +645,9 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
           separatorBuilder: (_, __) => const SizedBox(width: 8),
           itemBuilder: (context, index) {
             final p = _flashRow[index];
-            return SizedBox(
+            return GestureDetector(
+              onTap: () => _openProductDetail(p),
+              child: SizedBox(
               width: 165,
               child: Container(
                 decoration: BoxDecoration(
@@ -870,7 +663,14 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
                           borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
                           child: AspectRatio(
                             aspectRatio: 1,
-                            child: Image.network(p["image"] as String, fit: BoxFit.cover, width: double.infinity),
+                            child: p.thumbnail.isEmpty
+                                ? Container(color: Colors.grey.shade200, child: const Icon(Icons.image_not_supported_outlined, color: Colors.grey))
+                                : Image.network(
+                                    p.thumbnail,
+                                    fit: BoxFit.cover,
+                                    width: double.infinity,
+                                    errorBuilder: (c, e, s) => Container(color: Colors.grey.shade200, child: const Icon(Icons.image_not_supported_outlined, color: Colors.grey)),
+                                  ),
                           ),
                         ),
                         Positioned(
@@ -880,7 +680,7 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
                             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                             decoration: BoxDecoration(color: mallRed, borderRadius: BorderRadius.circular(3)),
                             child: Text(
-                              "-${p["discount"]}%",
+                              "-${p.discountPercent}%",
                               style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
                             ),
                           ),
@@ -919,7 +719,7 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
                               const SizedBox(width: 4),
                               Expanded(
                                 child: Text(
-                                  p["title"] as String,
+                                  p.name,
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(fontSize: 11.5, height: 1.2),
@@ -932,6 +732,7 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
                     ),
                   ],
                 ),
+              ),
               ),
             );
           },
@@ -1008,6 +809,7 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
 
   // ================= GIFT SECTION (Xem tất cả) =================
   Widget _buildGiftSection() {
+    if (_giftProducts.isEmpty) return const SizedBox.shrink();
     return Container(
       color: Colors.white,
       margin: const EdgeInsets.only(top: 8),
@@ -1028,7 +830,9 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
           Row(
             children: _giftProducts.map((p) {
               return Expanded(
-                child: Padding(
+                child: GestureDetector(
+                  onTap: () => _openProductDetail(p),
+                  child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 3),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1039,10 +843,17 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
                             borderRadius: BorderRadius.circular(4),
                             child: AspectRatio(
                               aspectRatio: 1,
-                              child: Image.network(p["image"] as String, fit: BoxFit.cover, width: double.infinity),
+                              child: p.thumbnail.isEmpty
+                                  ? Container(color: Colors.grey.shade200, child: const Icon(Icons.image_not_supported_outlined, color: Colors.grey))
+                                  : Image.network(
+                                      p.thumbnail,
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                      errorBuilder: (c, e, s) => Container(color: Colors.grey.shade200, child: const Icon(Icons.image_not_supported_outlined, color: Colors.grey)),
+                                    ),
                             ),
                           ),
-                          if ((p["discount"] as int) > 0)
+                          if (p.discountPercent > 0)
                             Positioned(
                               top: 4,
                               right: 4,
@@ -1050,7 +861,7 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
                                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                                 decoration: BoxDecoration(color: mallRed, borderRadius: BorderRadius.circular(3)),
                                 child: Text(
-                                  "-${p["discount"]}%",
+                                  "-${p.discountPercent}%",
                                   style: const TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.bold),
                                 ),
                               ),
@@ -1072,13 +883,13 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        p["title"] as String,
+                        p.name,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(fontSize: 10.5, height: 1.2),
                       ),
                       const SizedBox(height: 4),
-                      if (p["hasGift"] as bool)
+                      if (p.discountPercent >= 40)
                         Container(
                           padding: const EdgeInsets.symmetric(vertical: 3),
                           alignment: Alignment.center,
@@ -1096,7 +907,7 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
                         children: [
                           Expanded(
                             child: Text(
-                              "${p["price"]}đ",
+                              p.priceText,
                               style: const TextStyle(color: shopeeOrange, fontWeight: FontWeight.bold, fontSize: 13),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -1111,6 +922,7 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
                         ],
                       ),
                     ],
+                  ),
                   ),
                 ),
               );
@@ -1304,6 +1116,28 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
   }
 
   // ================= PRODUCTS HEADER =================
+  // ---- Mở trang chi tiết sản phẩm khi bấm vào 1 sản phẩm bất kỳ trong Mall ----
+  // `p.id` là id thật từ API nên tên/ảnh/giá ở trang chi tiết luôn khớp
+  // với đúng sản phẩm đã bấm (không còn hash tên để "đoán" id nữa).
+  void _openProductDetail(Product p) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ProductDetailScreen(
+          seedId: p.id,
+          fallbackName: p.name,
+          fallbackImage: p.thumbnail,
+          fallbackPrice: p.price,
+          fallbackOriginalPrice: p.originalPrice,
+          fallbackDiscount: p.discountPercent,
+          fallbackRating: p.rating,
+          fallbackSoldCount: p.soldCount,
+          fallbackLocation: p.location,
+        ),
+      ),
+    );
+  }
+
   Widget _buildProductsHeader() {
     return Container(
       color: const Color(0xFFF2F3F5),
@@ -1326,6 +1160,24 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
 
   // ================= PRODUCT GRID =================
   Widget _buildProductGrid() {
+    if (_loadingProducts && _products.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 32),
+        child: Center(child: CircularProgressIndicator(color: mallRed)),
+      );
+    }
+    if (_productsError != null && _products.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 12),
+        child: Column(
+          children: [
+            Text(_productsError!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey)),
+            const SizedBox(height: 8),
+            OutlinedButton(onPressed: _loadMallProducts, child: const Text('Thử lại')),
+          ],
+        ),
+      );
+    }
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6),
       child: GridView.builder(
@@ -1343,8 +1195,10 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
     );
   }
 
-  Widget _buildProductCard(Map<String, dynamic> p) {
-    return Container(
+  Widget _buildProductCard(Product p) {
+    return GestureDetector(
+      onTap: () => _openProductDetail(p),
+      child: Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(4),
@@ -1359,11 +1213,14 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
                 child: AspectRatio(
                   aspectRatio: 1,
-                  child: Image.network(
-                    p["image"] as String,
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                  ),
+                  child: p.thumbnail.isEmpty
+                      ? Container(color: Colors.grey.shade200, child: const Icon(Icons.image_not_supported_outlined, color: Colors.grey))
+                      : Image.network(
+                          p.thumbnail,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          errorBuilder: (c, e, s) => Container(color: Colors.grey.shade200, child: const Icon(Icons.image_not_supported_outlined, color: Colors.grey)),
+                        ),
                 ),
               ),
               Positioned(
@@ -1391,18 +1248,19 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
                   ),
                 ),
               ),
-              Positioned(
-                bottom: 0,
-                left: 0,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                  color: Colors.yellow[700],
-                  child: Text(
-                    "-${p["discount"]}%",
-                    style: const TextStyle(fontSize: 9, color: Colors.white, fontWeight: FontWeight.bold),
+              if (p.discountPercent > 0)
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                    color: Colors.yellow[700],
+                    child: Text(
+                      "-${p.discountPercent}%",
+                      style: const TextStyle(fontSize: 9, color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
           Padding(
@@ -1411,7 +1269,7 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  p["title"] as String,
+                  p.name,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontSize: 12, height: 1.2),
@@ -1421,7 +1279,7 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      "₫${p["price"]}",
+                      p.priceText,
                       style: const TextStyle(
                         color: shopeeOrange,
                         fontWeight: FontWeight.bold,
@@ -1431,7 +1289,7 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
-                        "₫${p["originalPrice"]}",
+                        p.originalPriceText,
                         style: TextStyle(
                           color: Colors.grey.shade400,
                           fontSize: 10.5,
@@ -1448,12 +1306,12 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
                     const Icon(Icons.star, color: Colors.orange, size: 12),
                     const SizedBox(width: 2),
                     Text(
-                      "${p["rating"]}",
+                      p.rating.toStringAsFixed(1),
                       style: const TextStyle(fontSize: 10.5, color: Colors.grey),
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      "Đã bán ${p["sold"]}",
+                      "Đã bán ${p.soldText}",
                       style: const TextStyle(fontSize: 10.5, color: Colors.grey),
                     ),
                   ],
@@ -1462,6 +1320,7 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
             ),
           ),
         ],
+      ),
       ),
     );
   }
