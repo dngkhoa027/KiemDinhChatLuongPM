@@ -952,7 +952,9 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
             itemCount: _brandVouchers.length,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              childAspectRatio: 0.92,
+              // Giảm tỉ lệ (tăng chiều cao ô) để có thêm khoảng đệm,
+              // tránh tràn khi text bị wrap thêm dòng trên máy có cỡ chữ lớn hơn.
+              childAspectRatio: 0.80,
               crossAxisSpacing: 10,
               mainAxisSpacing: 10,
             ),
@@ -1028,6 +1030,8 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
                           const SizedBox(height: 3),
                           Text(
                             v["condition"] as String,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(fontSize: 10.5, color: Colors.grey, height: 1.3),
                           ),
                         ],

@@ -35,6 +35,19 @@ class ShopeeApp extends StatelessWidget {
         ),
       ),
 
+      // Giới hạn cỡ chữ hệ thống (Cài đặt > Màn hình > Cỡ chữ) trong khoảng
+      // 0.9x - 1.15x. Nếu không giới hạn, khi test trên điện thoại thật có
+      // cỡ chữ được set lớn hơn máy ảo, chữ sẽ wrap thêm dòng và làm tràn
+      // (overflow) các khung có chiều cao cố định như voucher card, banner...
+      builder: (context, child) {
+        final mq = MediaQuery.of(context);
+        final clampedScale = mq.textScaler.scale(1).clamp(0.9, 1.15);
+        return MediaQuery(
+          data: mq.copyWith(textScaler: TextScaler.linear(clampedScale)),
+          child: child!,
+        );
+      },
+
       home: const ShopeeLoginPage(),
     );
   }

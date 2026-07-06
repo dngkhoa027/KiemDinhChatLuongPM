@@ -373,26 +373,39 @@ class _ShopeeNotificationPageState extends State<ShopeeNotificationPage> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: shopeeRed),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            secondaryLabel,
-                            style: const TextStyle(color: shopeeRed, fontSize: 11.5, fontWeight: FontWeight.w600),
+                        Flexible(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: shopeeRed),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                secondaryLabel,
+                                maxLines: 1,
+                                style: const TextStyle(color: shopeeRed, fontSize: 11.5, fontWeight: FontWeight.w600),
+                              ),
+                            ),
                           ),
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: shopeeOrange,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: const Text(
-                            "Dùng ngay!",
-                            style: TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.bold),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: shopeeOrange,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: const Text(
+                                "Dùng ngay!",
+                                maxLines: 1,
+                                style: TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.bold),
+                              ),
+                            ),
                           ),
                         ),
                       ],
