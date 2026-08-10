@@ -153,6 +153,21 @@ class Product {
   }
 }
 
+/// Các category (theo DummyJSON) được xem là "thiết bị điện tử / thiết bị
+/// di động" — chỉ những sản phẩm thuộc nhóm này mới được mua thêm
+/// "Bảo hiểm thiết bị di động nâng cao" ở trang Thanh toán. Sản phẩm thuộc
+/// các category khác sẽ hiển thị bảo hành thông thường, đặt tên theo đúng
+/// sản phẩm tương ứng thay vì gói bảo hiểm thiết bị di động.
+const Set<String> kMobileDeviceCategories = {
+  'smartphones',
+  'tablets',
+  'laptops',
+  'mobile-accessories',
+};
+
+bool isMobileDeviceCategory(String category) =>
+    kMobileDeviceCategories.contains(category);
+
 /// Chuyển chuỗi giá kiểu "199.000" hoặc "199.000đ" thành số nguyên VNĐ.
 int parseVndPriceString(String value) {
   final digits = value.replaceAll(RegExp(r'[^0-9]'), '');

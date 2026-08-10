@@ -44,6 +44,7 @@ class CartService extends ChangeNotifier {
     bool isMall = false,
     bool freeship = false,
     int quantity = 1,
+    String category = '',
   }) {
     CartShop? targetShop;
     for (final s in shops) {
@@ -79,6 +80,7 @@ class CartService extends ChangeNotifier {
           originalPrice: originalPrice,
           quantity: quantity,
           freeship: freeship,
+          category: category,
           selected: true,
         ),
       );
@@ -90,4 +92,15 @@ class CartService extends ChangeNotifier {
   /// Cho phép các màn hình khác (vd. ShopeeCartPage) báo lại thay đổi
   /// sau khi mutate trực tiếp lên [shops] (đổi số lượng, xoá item...).
   void refresh() => notifyListeners();
+
+  /// Xoá các [CartItem] cụ thể khỏi giỏ (vd. sau khi đặt hàng thành công ở
+  /// trang Thanh toán). Shop nào hết sản phẩm thì cũng bị xoá luôn.
+  void removeItems(Iterable<CartItem> items) {
+    final target = items.toSet();
+    for (final shop in shops) {
+      shop.items.removeWhere(target.contains);
+    }
+    shops.removeWhere((s) => s.items.isEmpty);
+    notifyListeners();
+  }
 }

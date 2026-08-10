@@ -6,6 +6,7 @@ import '../../services/cart_service.dart';
 import '../../services/address_service.dart';
 import '../../widgets/shop_avatar.dart';
 import '../shared/address_book_screen.dart';
+import 'checkout_screen.dart';
 
 /// Trang Giỏ Hàng kiểu Shopee.
 ///
@@ -625,8 +626,11 @@ class _ShopeeCartPageState extends State<ShopeeCartPage> {
           onPressed: _selectedCount == 0
               ? null
               : () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Chuyển đến trang thanh toán...'), duration: Duration(seconds: 1)),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => CheckoutScreen.fromCart(_shops),
+                    ),
                   );
                 },
           style: ElevatedButton.styleFrom(

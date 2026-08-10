@@ -10,6 +10,7 @@ import '../../services/auth_service.dart';
 import '../../services/shop_service.dart';
 import '../../services/cart_service.dart';
 import '../../utils/avatar_utils.dart';
+import '../buyer/my_orders_screen.dart';
 
 class ShopeeProfilePage extends StatefulWidget {
   const ShopeeProfilePage({super.key});
@@ -444,11 +445,18 @@ class _ShopeeProfilePageState extends State<ShopeeProfilePage> {
   // =========================================================
   Widget _buildOrderSection(BuildContext context) {
     final items = [
-      {"icon": Icons.account_balance_wallet_outlined, "label": "Chờ xác nhận"},
-      {"icon": Icons.inventory_2_outlined, "label": "Chờ lấy hàng"},
-      {"icon": Icons.local_shipping_outlined, "label": "Chờ giao hàng"},
-      {"icon": Icons.star_border, "label": "Đánh giá"},
+      {"icon": Icons.account_balance_wallet_outlined, "label": "Chờ xác nhận", "tabIndex": 1},
+      {"icon": Icons.inventory_2_outlined, "label": "Chờ lấy hàng", "tabIndex": 2},
+      {"icon": Icons.local_shipping_outlined, "label": "Chờ giao hàng", "tabIndex": 3},
+      {"icon": Icons.star_border, "label": "Đánh giá", "tabIndex": 4},
     ];
+
+    void openOrders(int tabIndex) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => MyOrdersScreen(initialTabIndex: tabIndex)),
+      );
+    }
 
     return Container(
       color: Colors.white,
@@ -459,19 +467,22 @@ class _ShopeeProfilePageState extends State<ShopeeProfilePage> {
             padding: const EdgeInsets.fromLTRB(14, 14, 14, 4),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: const [
-                Text(
+              children: [
+                const Text(
                   "Đơn mua",
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
-                Row(
-                  children: [
-                    Text(
-                      "Xem lịch sử mua hàng",
-                      style: TextStyle(color: Colors.grey, fontSize: 12.5),
-                    ),
-                    Icon(Icons.chevron_right, color: Colors.grey, size: 16),
-                  ],
+                GestureDetector(
+                  onTap: () => openOrders(0),
+                  child: const Row(
+                    children: [
+                      Text(
+                        "Xem lịch sử mua hàng",
+                        style: TextStyle(color: Colors.grey, fontSize: 12.5),
+                      ),
+                      Icon(Icons.chevron_right, color: Colors.grey, size: 16),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -481,21 +492,24 @@ class _ShopeeProfilePageState extends State<ShopeeProfilePage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: items.map((it) {
-                return Column(
-                  children: [
-                    Icon(it["icon"] as IconData, color: Colors.black87, size: 26),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      width: 66,
-                      child: Text(
-                        it["label"] as String,
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 11.5, height: 1.1),
+                return GestureDetector(
+                  onTap: () => openOrders(it["tabIndex"] as int),
+                  child: Column(
+                    children: [
+                      Icon(it["icon"] as IconData, color: Colors.black87, size: 26),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: 66,
+                        child: Text(
+                          it["label"] as String,
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 11.5, height: 1.1),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 );
               }).toList(),
             ),

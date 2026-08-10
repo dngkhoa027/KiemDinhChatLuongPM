@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../data/mock_data.dart';
+import 'live_watch_screen.dart';
 
 class ShopeeLivePage extends StatefulWidget {
   const ShopeeLivePage({super.key});
@@ -113,12 +114,8 @@ class _ShopeeLivePageState extends State<ShopeeLivePage> {
   Widget _buildLiveCard(Map<String, dynamic> item) {
     return GestureDetector(
       onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Đang vào livestream của ${item["shop"]}..."),
-            duration: const Duration(seconds: 1),
-            backgroundColor: Colors.black87,
-          ),
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => LiveWatchScreen(stream: item)),
         );
       },
       child: ClipRRect(

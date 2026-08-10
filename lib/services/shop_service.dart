@@ -30,6 +30,17 @@ class ShopService {
     return Shop.fromMap(snap.id, snap.data()!);
   }
 
+  /// Lấy 1 shop BẤT KỲ đã đăng ký trong hệ thống (shop tạo gần đây nhất).
+  /// Dùng cho những màn hình demo cần gắn với 1 shop THẬT từ Shop_API thay
+  /// vì dữ liệu mẫu hard-code (VD: màn hình xem livestream). Trả về null
+  /// nếu hệ thống chưa có shop nào được đăng ký.
+  Future<Shop?> fetchFirstShop() async {
+    final snap = await _shopsRef.orderBy('createdAt', descending: true).limit(1).get();
+    if (snap.docs.isEmpty) return null;
+    final doc = snap.docs.first;
+    return Shop.fromMap(doc.id, doc.data());
+  }
+
   /// Đăng 1 sản phẩm mới lên shop của seller.
   Future<String> addProduct({
     required String sellerId,

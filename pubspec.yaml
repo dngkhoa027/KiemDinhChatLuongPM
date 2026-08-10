@@ -16,6 +16,9 @@ dependencies:
   cloud_firestore: ^6.4.1
   http: ^1.2.2
   image_picker: ^1.1.2
+  video_player: ^2.11.1
+  share_plus: ^10.1.4
+  url_launcher: ^6.3.1
 
 dev_dependencies:
   flutter_test:
@@ -24,3 +27,36 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  # Đặt video mô phỏng livestream vào đây (ví dụ: assets/videos/live_1.mp4).
+  # Xem hướng dẫn ở assets/videos/HUONG_DAN_VIDEO.md
+  assets:
+    - assets/videos/
+
+  fonts:
+    - family: ShopeeDisplay
+      fonts:
+        - asset: assets/fonts/ShopeeDisplay-Light.ttf
+          weight: 300
+        - asset: assets/fonts/ShopeeDisplay-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/ShopeeDisplay-Medium.ttf
+          weight: 500
+        # Chưa có file "SemiBold" riêng nên trỏ weight 600 vào Bold để những
+        # chỗ code dùng FontWeight.w600 (rất nhiều: giá tiền, tên section,
+        # nút bấm...) vẫn khớp đúng 1 file font thay vì bị Flutter tự chọn
+        # weight gần nhất (dễ gây lệch độ đậm so với Shopee thật).
+        - asset: assets/fonts/ShopeeDisplay-Bold.ttf
+          weight: 600
+        - asset: assets/fonts/ShopeeDisplay-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/ShopeeDisplay-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/ShopeeDisplay-Black.ttf
+          weight: 900
+    # Font logotype riêng của Shopee, chỉ dùng cho chữ "Shopee" dạng wordmark
+    # (ví dụ logo ở màn hình đăng nhập) — không dùng cho text thường.
+    - family: FVHShopeeText
+      fonts:
+        - asset: assets/fonts/FVHShopeeText-Bold.otf
+          weight: 700

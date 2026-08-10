@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/cart_models.dart';
+import '../models/voucher_model.dart';
 
 /// ============================================================
 /// MOCK DATA – nơi tập trung TOÀN BỘ dữ liệu mẫu của ứng dụng.
@@ -23,14 +24,178 @@ class MockData {
   MockData._();
 
   // ============================================================
+  // VOUCHER / MÃ GIẢM GIÁ (checkout_screen.dart, voucher_selection_screen.dart)
+  // ============================================================
+
+  /// Voucher do Shop phát hành (áp dụng riêng cho đơn hàng của shop đó).
+  static List<Voucher> shopVouchers(String shopName) => [
+        Voucher(
+          id: 'shop_1',
+          code: 'SHOPFREESHIP',
+          title: 'Miễn phí vận chuyển',
+          source: VoucherSource.shop,
+          kind: VoucherKind.freeship,
+          discountType: VoucherDiscountType.fixed,
+          discountValue: 20000,
+          minSpend: 0,
+          quantity: 200,
+          used: 140,
+          expiry: 'HSD: 31.08.2026',
+          shopName: shopName,
+        ),
+        Voucher(
+          id: 'shop_2',
+          code: 'SHOPGIAM10',
+          title: 'Giảm 10%',
+          source: VoucherSource.shop,
+          discountType: VoucherDiscountType.percent,
+          discountValue: 10,
+          maxDiscount: 50000,
+          minSpend: 100000,
+          quantity: 100,
+          used: 62,
+          expiry: 'HSD: 20.08.2026',
+          shopName: shopName,
+        ),
+        Voucher(
+          id: 'shop_3',
+          code: 'SHOP110K',
+          title: 'Giảm 110.000đ',
+          source: VoucherSource.shop,
+          discountType: VoucherDiscountType.fixed,
+          discountValue: 110150,
+          minSpend: 500000,
+          quantity: 50,
+          used: 47,
+          expiry: 'HSD: 15.08.2026',
+          shopName: shopName,
+        ),
+      ];
+
+  /// Voucher toàn sàn do Shopee phát hành.
+  static const List<Voucher> platformVouchers = [
+    Voucher(
+      id: 'plat_1',
+      code: 'SFREESHIPXTRA',
+      title: 'Miễn phí vận chuyển',
+      source: VoucherSource.platform,
+      kind: VoucherKind.freeship,
+      discountType: VoucherDiscountType.fixed,
+      discountValue: 20100,
+      minSpend: 0,
+      quantity: 5000,
+      used: 4210,
+      expiry: 'HSD: 31.08.2026',
+    ),
+    Voucher(
+      id: 'plat_2',
+      code: 'SALE8SUM',
+      title: 'Giảm 8%',
+      source: VoucherSource.platform,
+      discountType: VoucherDiscountType.percent,
+      discountValue: 8,
+      maxDiscount: 100000,
+      minSpend: 200000,
+      quantity: 3000,
+      used: 2870,
+      expiry: 'HSD: 10.08.2026',
+    ),
+    Voucher(
+      id: 'plat_3',
+      code: 'GIAM50K',
+      title: 'Giảm 50.000đ',
+      source: VoucherSource.platform,
+      discountType: VoucherDiscountType.fixed,
+      discountValue: 50000,
+      minSpend: 300000,
+      quantity: 1000,
+      used: 990,
+      expiry: 'HSD: 08.08.2026',
+    ),
+  ];
+
+  // ============================================================
+  // ============================================================
+  // TRANG CHI TIẾT SẢN PHẨM (product_detail_screen.dart)
+  // ============================================================
+
+  /// Ảnh minh hoạ do NGƯỜI MUA đăng kèm đánh giá (review) — cố tình dùng
+  /// ảnh ngoài (không phải ảnh sản phẩm lấy từ API) để trông giống ảnh
+  /// khách thật chụp, thay vì lặp lại đúng ảnh sản phẩm trên sàn.
+  /// Ảnh minh hoạ do NGƯỜI MUA đăng kèm đánh giá (review) — dùng ảnh ngoài
+  /// (không phải ảnh sản phẩm từ API) để trông giống ảnh khách thật chụp.
+  /// Được nhóm theo LOẠI sản phẩm để ảnh review luôn khớp với mặt hàng
+  /// đang xem (review áo thì ra ảnh áo/quần, review điện thoại thì ra ảnh
+  /// điện thoại... không còn bị lẫn lộn danh mục).
+  static const Map<String, List<String>> reviewPhotosByCategory = {
+    'apparel': [
+      "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=400&q=80", // áo treo trên móc
+      "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400&q=80", // outfit thử đồ
+      "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=400&q=80", // quần áo gấp gọn
+      "https://images.unsplash.com/photo-1562157873-818bc0726f68?w=400&q=80", // sản phẩm đóng gói
+    ],
+    'shoes': [
+      "https://images.unsplash.com/photo-1445205170230-053b83016050?w=400&q=80", // giày dép
+      "https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?w=400&q=80", // giày sneaker
+      "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=400&q=80", // giày cận cảnh
+    ],
+    'accessories': [
+      "https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=400&q=80", // đồng hồ / phụ kiện
+      "https://images.unsplash.com/photo-1523293182086-7651a899d37f?w=400&q=80", // trang sức
+      "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=400&q=80", // kính mát
+      "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=400&q=80", // túi xách
+    ],
+    'electronics': [
+      "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&q=80", // điện thoại
+      "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&q=80", // laptop
+      "https://images.unsplash.com/photo-1585790050230-5dd28404ccb9?w=400&q=80", // tai nghe / phụ kiện
+      "https://images.unsplash.com/photo-1585060544812-6b45742d762f?w=400&q=80", // hộp máy mở ra
+    ],
+    'beauty': [
+      "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=400&q=80", // mỹ phẩm
+      "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400&q=80", // dưỡng da
+      "https://images.unsplash.com/photo-1571875257727-256c39da42af?w=400&q=80", // nước hoa
+    ],
+    'home': [
+      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&q=80", // nội thất
+      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&q=80", // đồ trang trí
+      "https://images.unsplash.com/photo-1556911220-bff31c812dce?w=400&q=80", // dụng cụ nhà bếp
+    ],
+    'food': [
+      "https://images.unsplash.com/photo-1506617420156-8e4536971650?w=400&q=80", // thực phẩm
+      "https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&q=80", // đồ ăn vặt
+    ],
+    'vehicle': [
+      "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=400&q=80", // phụ kiện xe
+      "https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=400&q=80", // mũ bảo hiểm / xe máy
+    ],
+    'sports': [
+      "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&q=80", // dụng cụ thể thao
+      "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=400&q=80", // đồ tập gym
+    ],
+    'other': [
+      "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=400&q=80",
+      "https://images.unsplash.com/photo-1503341504253-dff4815485f1?w=400&q=80",
+    ],
+  };
+
+  /// Ảnh bìa (thumbnail) cho mục "Video về sản phẩm" — cũng dùng ảnh ngoài
+  /// để giả lập khung hình đầu video thật, không lấy trùng ảnh sản phẩm.
+  static const List<String> productVideoThumbs = [
+    "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&q=80", // fashion store
+    "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=400&q=80", // review / unbox
+    "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=400&q=80", // model mặc thử
+  ];
+
+  // ============================================================
   // TRANG CHỦ (home_screen.dart)
   // ============================================================
 
   /// Banner carousel trang chủ
   static const List<String> homeBanners = [
-    "https://picsum.photos/id/1011/800/360",
-    "https://picsum.photos/id/1015/800/360",
-    "https://picsum.photos/id/1025/800/360",
+    "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1200&q=80", // shopping bags sale
+    "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&q=80", // fashion store
+    "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1200&q=80", // checkout / deal
   ];
 
   /// Danh mục trang chủ
@@ -190,17 +355,7 @@ class MockData {
   // ============================================================
 
   /// Banner chính (7.7) của Mall
-  static const List<Map<String, dynamic>> mallMainBanners = [
-    {
-      "tag": "lazychef",
-      "title1": "BẾP THÀNH THƠI",
-      "title2": "VỊ HẠNH PHÚC",
-      "date": "DUY NHẤT: 04/07 – 07/07",
-      "voucher": "300.000",
-      "discount": "45%",
-      "gift": "500.000",
-      "image": "https://picsum.photos/id/292/500/500",
-    },
+static const List<Map<String, dynamic>> mallMainBanners = [
     {
       "tag": "OPPO",
       "title1": "CÔNG NGHỆ ĐỈNH CAO",
@@ -209,7 +364,19 @@ class MockData {
       "voucher": "200.000",
       "discount": "30%",
       "gift": "300.000",
-      "image": "https://picsum.photos/id/160/500/500",
+      // Điện thoại / gadget – nền sạch, sản phẩm nổi
+      "image": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=900&q=80",
+    },
+    {
+      "tag": "8.8",
+      "title1": "SIÊU SALE THÁNG 8",
+      "title2": "FREESHIP 0Đ TOÀN SÀN",
+      "date": "DIỄN RA: 01/08 – 08/08",
+      "voucher": "500.000",
+      "discount": "50%",
+      "gift": "200.000",
+      // Lifestyle shopping
+      "image": "https://images.unsplash.com/photo-1607083206869-4c7672e72a8a?w=900&q=80",
     },
     {
       "tag": "L'Oréal",
@@ -219,7 +386,30 @@ class MockData {
       "voucher": "150.000",
       "discount": "50%",
       "gift": "200.000",
-      "image": "https://picsum.photos/id/119/500/500",
+      // Beauty / cosmetics
+      "image": "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=900&q=80",
+    },
+    {
+      "tag": "SAMSUNG",
+      "title1": "GALAXY SERIES MỚI",
+      "title2": "ƯU ĐÃI ĐẾN 2 TRIỆU",
+      "date": "ĐẶT TRƯỚC NGAY",
+      "voucher": "400.000",
+      "discount": "15%",
+      "gift": "500.000",
+      // Smartwatch / tech lifestyle
+      "image": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=900&q=80",
+    },
+    {
+      "tag": "LAZYCHEF",
+      "title1": "BẾP THÀNH THƠI",
+      "title2": "VỊ HẠNH PHÚC",
+      "date": "DUY NHẤT: 04/07 – 07/07",
+      "voucher": "300.000",
+      "discount": "45%",
+      "gift": "500.000",
+      // Kitchen / home
+      "image": "https://images.unsplash.com/photo-1556911220-bff31c812dce?w=900&q=80",
     },
   ];
 
@@ -601,11 +791,50 @@ class MockData {
 
   static const List<Map<String, dynamic>> liveStreams = [
     {
-      "thumb": "https://picsum.photos/id/1027/400/560",
-      "shop": "beauty.official",
-      "title": "SALE SỐC 50% Mỹ Phẩm Chính Hãng",
+      "thumb": "https://picsum.photos/id/292/400/560",
+      "shop": "nha.gia.dung.vn",
+      "title": "SALE SỐC 50% Đồ Gia Dụng Nhà Bếp",
       "viewers": "12,4k",
-      "price": "89.000",
+      "price": "329.000",
+      "video": "assets/videos/live_1.mp4",
+      "products": [
+        {
+          "thumb": "https://picsum.photos/id/292/300/300",
+          "name": "Nồi Chiên Không Dầu 5L Đa Năng",
+          "price": "699.000",
+          "originalPrice": "1.290.000",
+          "discount": "-46%",
+          "sold": "2,3k đã bán",
+          "rating": "4.9",
+        },
+        {
+          "thumb": "https://picsum.photos/id/312/300/300",
+          "name": "Máy Xay Sinh Tố Đa Năng 2L",
+          "price": "329.000",
+          "originalPrice": "590.000",
+          "discount": "-44%",
+          "sold": "1,1k đã bán",
+          "rating": "4.8",
+        },
+        {
+          "thumb": "https://picsum.photos/id/365/300/300",
+          "name": "Nồi Cơm Điện Tử Cao Tần 1.8L",
+          "price": "489.000",
+          "originalPrice": "850.000",
+          "discount": "-42%",
+          "sold": "980 đã bán",
+          "rating": "4.9",
+        },
+        {
+          "thumb": "https://picsum.photos/id/431/300/300",
+          "name": "Bộ Dao Kéo Nhà Bếp Inox 6 Món",
+          "price": "159.000",
+          "originalPrice": "299.000",
+          "discount": "-47%",
+          "sold": "3,4k đã bán",
+          "rating": "5.0",
+        },
+      ],
     },
     {
       "thumb": "https://picsum.photos/id/1011/400/560",
