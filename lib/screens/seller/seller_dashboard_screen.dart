@@ -22,6 +22,15 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
   List<MapEntry<String, Product>> _products = [];
   bool _loading = true;
 
+  final TextEditingController _searchCtrl = TextEditingController();
+  String _searchQuery = '';
+
+  List<MapEntry<String, Product>> get _filteredProducts {
+    if (_searchQuery.trim().isEmpty) return _products;
+    final q = _searchQuery.trim().toLowerCase();
+    return _products.where((e) => e.value.name.toLowerCase().contains(q)).toList();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -38,6 +47,12 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
       _products = products;
       _loading = false;
     });
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
   }
 
   Future<void> _openAddProduct() async {
@@ -76,11 +91,49 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                 children: [
                   _buildShopHeader(),
                   const SizedBox(height: 16),
+                  if (_products.isNotEmpty) ...[
+                    Container(
+                      height: 42,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(21),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.search, size: 20, color: Colors.grey.shade500),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: TextField(
+                              controller: _searchCtrl,
+                              onChanged: (v) => setState(() => _searchQuery = v),
+                              decoration: const InputDecoration(
+                                border: InputBorder.none,
+                                hintText: 'Tìm sản phẩm của bạn',
+                                isDense: true,
+                              ),
+                              style: const TextStyle(fontSize: 13.5),
+                            ),
+                          ),
+                          if (_searchQuery.isNotEmpty)
+                            GestureDetector(
+                              onTap: () => setState(() {
+                                _searchCtrl.clear();
+                                _searchQuery = '';
+                              }),
+                              child: Icon(Icons.close, size: 18, color: Colors.grey.shade500),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   Row(
                     children: [
                       const Text('Sản phẩm của tôi', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                       const Spacer(),
-                      Text('${_products.length} sản phẩm', style: const TextStyle(color: Colors.grey, fontSize: 12.5)),
+                      Text('${_filteredProducts.length} sản phẩm', style: const TextStyle(color: Colors.grey, fontSize: 12.5)),
                     ],
                   ),
                   const SizedBox(height: 10),
@@ -95,8 +148,19 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                         ],
                       ),
                     )
+                  else if (_filteredProducts.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 40),
+                      child: Column(
+                        children: [
+                          Icon(Icons.search_off, size: 48, color: Colors.grey.shade400),
+                          const SizedBox(height: 10),
+                          Text('Không tìm thấy sản phẩm phù hợp.', style: TextStyle(color: Colors.grey.shade600)),
+                        ],
+                      ),
+                    )
                   else
-                    ..._products.map((entry) => _buildProductTile(entry.key, entry.value)),
+                    ..._filteredProducts.map((entry) => _buildProductTile(entry.key, entry.value)),
                 ],
               ),
             ),
@@ -111,7 +175,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
         children: [
           CircleAvatar(
             radius: 26,
-            backgroundColor: shopeeOrange.withOpacity(0.1),
+            backgroundColor: shopeeOrange.withValues(alpha: 0.1),
             child: const Icon(Icons.storefront, color: shopeeOrange),
           ),
           const SizedBox(width: 12),

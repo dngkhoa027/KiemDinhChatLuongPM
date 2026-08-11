@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import '../../data/mock_data.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../widgets/shop_avatar.dart';
@@ -12,6 +13,7 @@ import '../../services/product_api_service.dart';
 import '../../services/cart_service.dart';
 import 'cart_screen.dart';
 import 'checkout_screen.dart';
+import 'video_feed_screen.dart';
 
 /// Video mặc định dùng để GIẢ LẬP (fake) luồng livestream khi chưa có server
 /// streaming thật. Hãy đặt 1 file video (vd: quay màn hình bán hàng, video
@@ -29,8 +31,17 @@ const String kDefaultLiveVideoAsset = 'assets/videos/live_1.mp4';
 /// thanh điều hướng dưới cùng.
 class LiveWatchScreen extends StatefulWidget {
   final Map<String, dynamic> stream;
+  /// true khi trang đang hiển thị trong PageView feed (phát video).
+  final bool isActive;
+  /// true khi nằm trong [LiveFeedScreen] — không tự bọc thêm gesture chuyển live.
+  final bool embeddedInFeed;
 
-  const LiveWatchScreen({super.key, required this.stream});
+  const LiveWatchScreen({
+    super.key,
+    required this.stream,
+    this.isActive = true,
+    this.embeddedInFeed = false,
+  });
 
   @override
   State<LiveWatchScreen> createState() => _LiveWatchScreenState();
@@ -407,6 +418,18 @@ class _LiveWatchScreenState extends State<LiveWatchScreen> {
     return '$n';
   }
 
+  @override
+  void didUpdateWidget(covariant LiveWatchScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final c = _videoController;
+    if (c == null || !c.value.isInitialized) return;
+    if (widget.isActive && !oldWidget.isActive) {
+      c.play();
+    } else if (!widget.isActive && oldWidget.isActive) {
+      c.pause();
+    }
+  }
+
   Future<void> _initVideo() async {
     final asset = (widget.stream['video'] as String?) ?? kDefaultLiveVideoAsset;
     final controller = VideoPlayerController.asset(asset);
@@ -415,7 +438,11 @@ class _LiveWatchScreenState extends State<LiveWatchScreen> {
       await controller.initialize();
       await controller.setLooping(true);
       await controller.setVolume(0); // fake livestream: mặc định tắt tiếng
-      await controller.play();
+      if (widget.isActive) {
+        await controller.play();
+      } else {
+        await controller.pause();
+      }
       if (!mounted) return;
       setState(() => _videoReady = true);
     } catch (_) {
@@ -484,49 +511,56 @@ class _LiveWatchScreenState extends State<LiveWatchScreen> {
     return '$m:$s';
   }
 
+
   @override
   Widget build(BuildContext context) {
     final item = widget.stream;
+    final content = Stack(
+      fit: StackFit.expand,
+      children: [
+        _buildVideoBackground(),
+        // Lớp phủ mờ nhẹ trên/dưới giúp chữ dễ đọc hơn trên nền video
+        const _ScrimOverlay(),
+        for (final h in _hearts) _FloatingHeart(key: ValueKey(h.id), dx: h.dx),
+        SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildTopNav(),
+              const SizedBox(height: 6),
+              _buildHostRow(item),
+              const SizedBox(height: 10),
+              Expanded(
+                child: Stack(
+                  children: [
+                    Positioned(right: 10, top: 0, child: _buildRightColumn(item)),
+                    Positioned(left: 10, top: 4, child: _buildVoucherCard(item)),
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      child: _buildBottomArea(item),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+
+    // Trong feed: không bọc Scaffold (parent đã có). Đứng một mình: có Scaffold.
+    if (widget.embeddedInFeed) {
+      return content;
+    }
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          _buildVideoBackground(),
-          // Lớp phủ mờ nhẹ trên/dưới giúp chữ dễ đọc hơn trên nền video
-          const _ScrimOverlay(),
-          for (final h in _hearts) _FloatingHeart(key: ValueKey(h.id), dx: h.dx),
-          SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildTopNav(),
-                const SizedBox(height: 6),
-                _buildHostRow(item),
-                const SizedBox(height: 10),
-                Expanded(
-                  child: Stack(
-                    children: [
-                      Positioned(right: 10, top: 0, child: _buildRightColumn(item)),
-                      Positioned(left: 10, top: 4, child: _buildVoucherCard(item)),
-                      Positioned(
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        child: _buildBottomArea(item),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+      body: content,
     );
   }
 
-  // ================= THANH TAB TRÊN CÙNG (Video / Live / Phim / Cho bạn) =================
+  // ================= THANH TAB TRÊN CÙNG (Video / Live / Drama / Cho bạn) =================
   // Không còn nút "X" đóng riêng — giống app mẫu, người xem thoát livestream
   // bằng thao tác vuốt lùi/back thông thường của hệ điều hành (vuốt từ cạnh
   // trái trên iOS, nút back trên Android), Navigator vẫn hoạt động bình
@@ -553,7 +587,7 @@ class _LiveWatchScreenState extends State<LiveWatchScreen> {
                 const SizedBox(width: 20),
                 _topNavTab('Live'),
                 const SizedBox(width: 20),
-                _topNavTab('Phim', badge: 'Mới'),
+                _topNavTab('Drama', badge: 'Mới'),
                 const SizedBox(width: 20),
                 _topNavTab('Cho bạn', selected: true),
               ],
@@ -587,7 +621,22 @@ class _LiveWatchScreenState extends State<LiveWatchScreen> {
   Widget _topNavTab(String label, {bool selected = false, String? badge}) {
     return GestureDetector(
       onTap: () {
-        if (!selected) _toast('$label — tính năng đang phát triển');
+        if (selected) return;
+        // Chỉ tab Video → màn Video feed (giữ stack, back sẽ về live)
+        if (label == 'Video') {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const VideoFeedScreen(initialTab: 0),
+              fullscreenDialog: false,
+            ),
+          );
+          return;
+        }
+        // Live / Cho bạn / Drama: ở lại livestream
+        if (label == 'Drama') {
+          _toast('Drama — sắp ra mắt');
+          return;
+        }
       },
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -601,7 +650,7 @@ class _LiveWatchScreenState extends State<LiveWatchScreen> {
                   color: selected ? Colors.white : Colors.white70,
                   fontSize: 15,
                   fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-                  fontStyle: label == 'Phim' ? FontStyle.italic : FontStyle.normal,
+                  fontStyle: label == 'Drama' ? FontStyle.italic : FontStyle.normal,
                 ),
               ),
               if (badge != null)
@@ -830,7 +879,7 @@ class _LiveWatchScreenState extends State<LiveWatchScreen> {
       width: 152,
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.55),
+        color: Colors.black.withValues(alpha: 0.55),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
@@ -951,7 +1000,7 @@ class _LiveWatchScreenState extends State<LiveWatchScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(8),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 3))],
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 3))],
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -1183,7 +1232,7 @@ class _LiveWatchScreenState extends State<LiveWatchScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.35),
+                      color: Colors.black.withValues(alpha: 0.35),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: RichText(
@@ -1502,7 +1551,7 @@ class _LiveWatchScreenState extends State<LiveWatchScreen> {
   Widget _miniTag(String text, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-      decoration: BoxDecoration(border: Border.all(color: color.withOpacity(0.6)), borderRadius: BorderRadius.circular(3)),
+      decoration: BoxDecoration(border: Border.all(color: color.withValues(alpha: 0.6)), borderRadius: BorderRadius.circular(3)),
       child: Text(text, style: TextStyle(color: color, fontSize: 8, fontWeight: FontWeight.bold)),
     );
   }
@@ -1840,6 +1889,7 @@ class _ChatMsg {
 class _ScrimOverlay extends StatelessWidget {
   const _ScrimOverlay();
 
+
   @override
   Widget build(BuildContext context) {
     return IgnorePointer(
@@ -1849,10 +1899,10 @@ class _ScrimOverlay extends StatelessWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Colors.black.withOpacity(0.35),
+              Colors.black.withValues(alpha: 0.35),
               Colors.transparent,
               Colors.transparent,
-              Colors.black.withOpacity(0.45),
+              Colors.black.withValues(alpha: 0.45),
             ],
             stops: const [0.0, 0.18, 0.6, 1.0],
           ),
@@ -1891,6 +1941,7 @@ class _FloatingHeartState extends State<_FloatingHeart> with SingleTickerProvide
     _controller.dispose();
     super.dispose();
   }
+
 
   @override
   Widget build(BuildContext context) {

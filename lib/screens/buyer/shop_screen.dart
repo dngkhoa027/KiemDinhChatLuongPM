@@ -3,6 +3,8 @@ import '../../models/product_model.dart';
 import '../../services/product_api_service.dart';
 import '../../widgets/shop_avatar.dart';
 import 'product_detail_screen.dart';
+import 'product_search_screen.dart';
+import 'shop_chat_screen.dart';
 
 /// Trang "Shop" (gian hàng ảo) — demo cho ý tưởng shop chuyên 1 ngành hàng.
 ///
@@ -112,6 +114,13 @@ class _ShopDetailScreenState extends State<ShopDetailScreen>
     );
   }
 
+  void _openChat() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => ShopChatScreen(shopName: widget.shopName)),
+    );
+  }
+
   void _openProduct(Product p) {
     Navigator.push(
       context,
@@ -207,7 +216,7 @@ class _ShopDetailScreenState extends State<ShopDetailScreen>
                         Positioned(
                           right: -16,
                           top: -16,
-                          child: Icon(_categoryIcon, size: 110, color: Colors.white.withOpacity(0.14)),
+                          child: Icon(_categoryIcon, size: 110, color: Colors.white.withValues(alpha: 0.14)),
                         ),
                       ],
                     ),
@@ -222,25 +231,34 @@ class _ShopDetailScreenState extends State<ShopDetailScreen>
                       _circleIconButton(Icons.arrow_back, () => Navigator.of(context).pop()),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: Container(
-                          height: 34,
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.94),
-                            borderRadius: BorderRadius.circular(17),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.search, size: 17, color: Colors.grey.shade600),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Tìm kiếm sản phẩm trong Shop',
-                                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => ProductSearchScreen(initialHint: 'Tìm kiếm sản phẩm trong Shop'),
                               ),
-                            ],
+                            );
+                          },
+                          child: Container(
+                            height: 34,
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.94),
+                              borderRadius: BorderRadius.circular(17),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.search, size: 17, color: Colors.grey.shade600),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Tìm kiếm sản phẩm trong Shop',
+                                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -271,7 +289,7 @@ class _ShopDetailScreenState extends State<ShopDetailScreen>
                           shape: BoxShape.circle,
                           color: Colors.white,
                           border: Border.all(color: Colors.white, width: 3),
-                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 5)],
+                          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.12), blurRadius: 5)],
                         ),
                         child: ShopAvatar(
                           shopName: widget.shopName,
@@ -370,7 +388,7 @@ class _ShopDetailScreenState extends State<ShopDetailScreen>
                       child: SizedBox(
                         height: 32,
                         child: OutlinedButton.icon(
-                          onPressed: () => _showComingSoon('Chat với Shop'),
+                          onPressed: _openChat,
                           style: OutlinedButton.styleFrom(
                             foregroundColor: shopeeOrange,
                             side: const BorderSide(color: shopeeOrange),
@@ -421,7 +439,7 @@ class _ShopDetailScreenState extends State<ShopDetailScreen>
       child: Container(
         width: 32,
         height: 32,
-        decoration: BoxDecoration(color: Colors.black.withOpacity(0.22), shape: BoxShape.circle),
+        decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.22), shape: BoxShape.circle),
         child: Icon(icon, size: 17, color: Colors.white),
       ),
     );
@@ -583,7 +601,7 @@ class _ShopDetailScreenState extends State<ShopDetailScreen>
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: selected ? shopeeOrange.withOpacity(0.08) : Colors.transparent,
+            color: selected ? shopeeOrange.withValues(alpha: 0.08) : Colors.transparent,
             border: Border.all(color: selected ? shopeeOrange : Colors.grey.shade300),
             borderRadius: BorderRadius.circular(4),
           ),
@@ -661,7 +679,7 @@ class _ShopDetailScreenState extends State<ShopDetailScreen>
             Container(
               width: 40,
               height: 40,
-              decoration: BoxDecoration(color: shopeeOrange.withOpacity(0.08), borderRadius: BorderRadius.circular(6)),
+              decoration: BoxDecoration(color: shopeeOrange.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(6)),
               child: Icon(icon, color: shopeeOrange, size: 20),
             ),
             const SizedBox(width: 12),

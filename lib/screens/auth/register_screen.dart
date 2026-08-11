@@ -210,7 +210,7 @@ class _ShopeeRegisterPageState extends State<ShopeeRegisterPage>
               height: 220,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.07),
+                color: Colors.white.withValues(alpha: 0.07),
               ),
             ),
           ),
@@ -222,7 +222,7 @@ class _ShopeeRegisterPageState extends State<ShopeeRegisterPage>
               height: 200,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.05),
+                color: Colors.white.withValues(alpha: 0.05),
               ),
             ),
           ),
@@ -260,11 +260,10 @@ class _ShopeeRegisterPageState extends State<ShopeeRegisterPage>
           width: 80,
           height: 80,
           decoration: BoxDecoration(
-            color: Colors.white,
             borderRadius: BorderRadius.circular(18),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.18),
+                color: Colors.black.withValues(alpha: 0.18),
                 blurRadius: 24,
                 offset: const Offset(0, 8),
               ),
@@ -272,12 +271,9 @@ class _ShopeeRegisterPageState extends State<ShopeeRegisterPage>
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(18),
-            child: Padding(
-              padding: const EdgeInsets.all(10),
-              child: CustomPaint(
-                painter: ShopeeBagPainter(),
-                size: const Size(60, 60),
-              ),
+            child: Image.asset(
+              'assets/picture/Shopee_Logo.png',
+              fit: BoxFit.cover,
             ),
           ),
         ),
@@ -295,7 +291,7 @@ class _ShopeeRegisterPageState extends State<ShopeeRegisterPage>
         Text(
           'Đăng ký để bắt đầu mua sắm ngay!',
           style: TextStyle(
-            color: Colors.white.withOpacity(0.88),
+            color: Colors.white.withValues(alpha: 0.88),
             fontSize: 13.5,
             fontWeight: FontWeight.w400,
           ),
@@ -741,7 +737,7 @@ class _ShopeeRegisterPageState extends State<ShopeeRegisterPage>
             border: Border.all(color: const Color(0xFFEEEEEE), width: 1.5),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Colors.black.withValues(alpha: 0.04),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),

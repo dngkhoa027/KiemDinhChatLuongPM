@@ -122,7 +122,7 @@ class _AddressBookScreenState extends State<AddressBookScreen> {
           Container(
             width: 96,
             height: 96,
-            decoration: BoxDecoration(color: shopeeOrange.withOpacity(0.08), shape: BoxShape.circle),
+            decoration: BoxDecoration(color: shopeeOrange.withValues(alpha: 0.08), shape: BoxShape.circle),
             child: const Icon(Icons.location_off_outlined, size: 44, color: shopeeOrange),
           ),
           const SizedBox(height: 18),
@@ -144,8 +144,8 @@ class _AddressBookScreenState extends State<AddressBookScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: address.isDefault ? shopeeOrange.withOpacity(0.4) : Colors.transparent),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 14, offset: const Offset(0, 5))],
+        border: Border.all(color: address.isDefault ? shopeeOrange.withValues(alpha: 0.4) : Colors.transparent),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 14, offset: const Offset(0, 5))],
       ),
       padding: const EdgeInsets.fromLTRB(16, 14, 12, 10),
       child: Column(
@@ -157,7 +157,7 @@ class _AddressBookScreenState extends State<AddressBookScreen> {
               Container(
                 margin: const EdgeInsets.only(top: 2),
                 padding: const EdgeInsets.all(7),
-                decoration: BoxDecoration(color: shopeeOrange.withOpacity(0.08), borderRadius: BorderRadius.circular(9)),
+                decoration: BoxDecoration(color: shopeeOrange.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(9)),
                 child: Icon(_labelIcon(address.label), size: 16, color: shopeeOrange),
               ),
               const SizedBox(width: 10),
@@ -268,7 +268,7 @@ class _AddressBookScreenState extends State<AddressBookScreen> {
   Widget _buildAddBar() {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-      decoration: BoxDecoration(color: Colors.white, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 12, offset: const Offset(0, -3))]),
+      decoration: BoxDecoration(color: Colors.white, boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, -3))]),
       child: SafeArea(
         top: false,
         child: SizedBox(

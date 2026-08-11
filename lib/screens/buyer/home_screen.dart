@@ -4,9 +4,11 @@ import '../shared/profile_screen.dart';
 import '../shared/notification_screen.dart';
 import 'mall_screen.dart';
 import 'live_watch_screen.dart';
+import 'live_feed_screen.dart';
 import 'cart_screen.dart';
 import 'product_detail_screen.dart';
 import 'product_search_screen.dart';
+import 'qr_scan_screen.dart';
 import '../../data/mock_data.dart';
 import '../../models/product_model.dart';
 import '../../services/product_api_service.dart';
@@ -184,11 +186,12 @@ class _ShopeeHomePageState extends State<ShopeeHomePage> {
         currentIndex: _currentIndex,
         onTap: (index) {
           if (index == 2) {
+            // Tab Live — mở livestream như ban đầu
             final streams = MockData.liveStreams;
             if (streams.isNotEmpty) {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => LiveWatchScreen(stream: streams.first),
+                  builder: (_) => const LiveFeedScreen(),
                   fullscreenDialog: true,
                 ),
               );
@@ -286,14 +289,7 @@ class _ShopeeHomePageState extends State<ShopeeHomePage> {
               Row(
                 children: [
                   Expanded(
-                    child: GestureDetector(
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ProductSearchScreen(initialHint: _searchHints[_hintIndex]),
-                        ),
-                      ),
-                      child: Container(
+                    child: Container(
                       height: 40,
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
@@ -302,27 +298,48 @@ class _ShopeeHomePageState extends State<ShopeeHomePage> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.search, color: Colors.grey.shade500, size: 20),
-                          const SizedBox(width: 8),
                           Expanded(
-                            child: AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 280),
-                              child: Align(
-                                key: ValueKey(_hintIndex),
-                                alignment: Alignment.centerLeft,
-                                child: Text(
-                                  _searchHints[_hintIndex],
-                                  style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ProductSearchScreen(initialHint: _searchHints[_hintIndex]),
                                 ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.search, color: Colors.grey.shade500, size: 20),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: AnimatedSwitcher(
+                                      duration: const Duration(milliseconds: 280),
+                                      child: Align(
+                                        key: ValueKey(_hintIndex),
+                                        alignment: Alignment.centerLeft,
+                                        child: Text(
+                                          _searchHints[_hintIndex],
+                                          style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
-                          Icon(Icons.camera_alt_outlined, color: Colors.grey.shade600, size: 22),
+                          GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const QrScanScreen()),
+                            ),
+                            child: Icon(Icons.camera_alt_outlined, color: Colors.grey.shade600, size: 22),
+                          ),
                         ],
                       ),
-                    ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -405,7 +422,7 @@ class _ShopeeHomePageState extends State<ShopeeHomePage> {
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.07),
+            color: Colors.black.withValues(alpha: 0.07),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -633,7 +650,7 @@ class _ShopeeHomePageState extends State<ShopeeHomePage> {
                 itemBuilder: (context, index) {
                   final it = useIcons[index];
                   final color = (it['color'] as Color?) ?? shopeeOrange;
-                  final bg = (it['bg'] as Color?) ?? color.withOpacity(0.12);
+                  final bg = (it['bg'] as Color?) ?? color.withValues(alpha: 0.12);
                   final label = it['label'] as String? ?? '';
                   final iconData = it['icon'] as IconData? ?? Icons.apps;
 
@@ -785,7 +802,7 @@ class _ShopeeHomePageState extends State<ShopeeHomePage> {
                       l['thumb'] as String? ?? '',
                       fit: BoxFit.cover,
                       width: double.infinity,
-                      errorBuilder: (_, __, ___) => Container(color: Colors.grey.shade300),
+                      errorBuilder: (_, _, _) => Container(color: Colors.grey.shade300),
                     ),
                   ),
                   Positioned(
@@ -854,7 +871,7 @@ class _ShopeeHomePageState extends State<ShopeeHomePage> {
                       v['thumb'] as String? ?? '',
                       fit: BoxFit.cover,
                       width: double.infinity,
-                      errorBuilder: (_, __, ___) => Container(color: Colors.grey.shade300),
+                      errorBuilder: (_, _, _) => Container(color: Colors.grey.shade300),
                     ),
                   ),
                   Positioned(
@@ -988,7 +1005,7 @@ class _ShopeeHomePageState extends State<ShopeeHomePage> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: const Text('ShopeeMall', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600)),
@@ -1012,7 +1029,7 @@ class _ShopeeHomePageState extends State<ShopeeHomePage> {
                     const SizedBox(width: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                      decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(4)),
+                      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(4)),
                       child: const Text('CÒN 2 NGÀY', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
                     ),
                   ],
@@ -1044,7 +1061,7 @@ class _ShopeeHomePageState extends State<ShopeeHomePage> {
                 const SizedBox(height: 10),
                 Text(
                   '(*) Chỉ áp dụng cho một số sản phẩm thuộc ngành hàng điện lạnh.',
-                  style: TextStyle(color: Colors.white.withOpacity(0.75), fontSize: 8),
+                  style: TextStyle(color: Colors.white.withValues(alpha: 0.75), fontSize: 8),
                 ),
               ],
             ),
@@ -1059,7 +1076,7 @@ class _ShopeeHomePageState extends State<ShopeeHomePage> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 6),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.18),
+          color: Colors.white.withValues(alpha: 0.18),
           borderRadius: BorderRadius.circular(6),
         ),
         child: Text(
@@ -1207,17 +1224,21 @@ class _ShopeeHomePageState extends State<ShopeeHomePage> {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  // Giá
+                  // Giá + đã bán (tránh overflow khi giá dài)
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Text(
-                        p.priceText,
-                        style: const TextStyle(color: shopeeOrange, fontWeight: FontWeight.w800, fontSize: 15),
+                      Flexible(
+                        child: Text(
+                          p.priceText,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: shopeeOrange, fontWeight: FontWeight.w800, fontSize: 15),
+                        ),
                       ),
                       const SizedBox(width: 3),
                       const Icon(Icons.monetization_on, size: 13, color: Color(0xFFFFC107)),
-                      const Spacer(),
+                      const SizedBox(width: 6),
                       Text(
                         'Đã bán ${p.soldText}',
                         style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
@@ -1276,7 +1297,7 @@ class _ShopeeHomePageState extends State<ShopeeHomePage> {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(3),
-        border: Border.all(color: color.withOpacity(0.35)),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
       ),
       child: Text(text, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w600)),
     );
@@ -1297,7 +1318,7 @@ class _ShopeeHomePageState extends State<ShopeeHomePage> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: Colors.white,
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 8)],
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 8)],
               ),
               child: const Padding(
                 padding: EdgeInsets.all(4),

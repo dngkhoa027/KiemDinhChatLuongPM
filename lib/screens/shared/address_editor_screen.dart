@@ -242,7 +242,7 @@ class _AddressEditorScreenState extends State<AddressEditorScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 16, offset: const Offset(0, 6))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 16, offset: const Offset(0, 6))],
       ),
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       child: Column(
@@ -348,7 +348,7 @@ class _AddressEditorScreenState extends State<AddressEditorScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
-                  color: selected ? shopeeOrange.withOpacity(0.08) : Colors.grey.shade50,
+                  color: selected ? shopeeOrange.withValues(alpha: 0.08) : Colors.grey.shade50,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: selected ? shopeeOrange : Colors.grey.shade300),
                 ),
@@ -372,7 +372,7 @@ class _AddressEditorScreenState extends State<AddressEditorScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 16, offset: const Offset(0, 6))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 16, offset: const Offset(0, 6))],
       ),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: Row(
@@ -413,7 +413,7 @@ class _AddressEditorScreenState extends State<AddressEditorScreen> {
   Widget _buildSaveBar() {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-      decoration: BoxDecoration(color: Colors.white, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 12, offset: const Offset(0, -3))]),
+      decoration: BoxDecoration(color: Colors.white, boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, -3))]),
       child: SafeArea(
         top: false,
         child: SizedBox(

@@ -134,7 +134,7 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
                         controller: scrollController,
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         itemCount: options.length,
-                        separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey.shade100, indent: 16, endIndent: 16),
+                        separatorBuilder: (_, _) => Divider(height: 1, color: Colors.grey.shade100, indent: 16, endIndent: 16),
                         itemBuilder: (context, index) {
                           final item = options[index];
                           return ListTile(

@@ -75,7 +75,7 @@ class _SellerRegisterScreenState extends State<SellerRegisterScreen> {
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: shopeeOrange.withOpacity(0.08),
+                  color: shopeeOrange.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Row(

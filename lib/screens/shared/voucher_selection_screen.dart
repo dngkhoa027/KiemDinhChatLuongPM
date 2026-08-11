@@ -1,16 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../models/voucher_model.dart';
 
-/// Bottom sheet chọn Voucher kiểu Shopee.
+/// Bottom sheet / trang chọn Voucher kiểu Shopee.
 ///
-/// LƯU Ý: Voucher của Shop và Voucher của Shopee là 2 danh sách HOÀN TOÀN
-/// RIÊNG BIỆT — không gộp chung 1 sheet dạng tab. Mỗi lần mở sheet chỉ
-/// hiển thị đúng 1 danh sách voucher, tính đủ điều kiện / số tiền giảm dựa
-/// trên [orderTotal] tương ứng của phạm vi đó:
-///   - Mở từ 1 Shop  -> chỉ truyền voucher của Shop đó + tổng tiền hàng của
-///     riêng Shop đó (không tính hàng của Shop khác).
-///   - Mở "Shopee Voucher" -> chỉ truyền voucher toàn sàn + tổng tiền của
-///     TOÀN BỘ đơn hàng (tất cả các Shop cộng lại).
+/// - Shop Voucher: giữ layout cũ (đơn giản).
+/// - Shopee Voucher: layout mới giống ảnh (FREE SHIP, mã giảm giá, không khả dụng...).
 class VoucherSelectionSheet extends StatefulWidget {
   final String title;
   final List<Voucher> vouchers;
@@ -32,6 +26,19 @@ class VoucherSelectionSheet extends StatefulWidget {
     required int orderTotal,
     Voucher? initialSelected,
   }) {
+    final isShopee = title.toLowerCase().contains('shopee');
+    if (isShopee) {
+      return Navigator.of(context).push<VoucherPickResult>(
+        MaterialPageRoute(
+          builder: (_) => VoucherSelectionSheet(
+            title: title,
+            vouchers: vouchers,
+            orderTotal: orderTotal,
+            initialSelected: initialSelected,
+          ),
+        ),
+      );
+    }
     return showModalBottomSheet<VoucherPickResult>(
       context: context,
       isScrollControlled: true,
@@ -49,24 +56,45 @@ class VoucherSelectionSheet extends StatefulWidget {
   State<VoucherSelectionSheet> createState() => _VoucherSelectionSheetState();
 }
 
-/// Kết quả trả về sau khi đóng sheet: voucher đã chọn (có thể null = bỏ chọn).
+/// Shop: dùng [voucher]. Shopee: dùng [freeshipVoucher] + [discountVoucher] đồng thời.
 class VoucherPickResult {
   final Voucher? voucher;
-  const VoucherPickResult(this.voucher);
+  final Voucher? freeshipVoucher;
+  final Voucher? discountVoucher;
+
+  const VoucherPickResult(
+    this.voucher, {
+    this.freeshipVoucher,
+    this.discountVoucher,
+  });
 }
 
 class _VoucherSelectionSheetState extends State<VoucherSelectionSheet> {
   static const Color orange = Color(0xFFEE4D2D);
   static const Color subText = Color(0xFF757575);
 
-  Voucher? _picked;
+  Voucher? _picked; // shop / single
+  Voucher? _pickedFreeship; // shopee dual
+  Voucher? _pickedDiscount; // shopee dual
   final TextEditingController _codeCtrl = TextEditingController();
   String? _codeError;
+  bool _showMoreShip = false;
+  bool _showMoreUnavailable = false;
+
+  bool get _isShopee => widget.title.toLowerCase().contains('shopee');
 
   @override
   void initState() {
     super.initState();
     _picked = widget.initialSelected;
+    // Nếu initial là freeship hoặc discount, gán đúng slot
+    if (widget.initialSelected != null) {
+      if (widget.initialSelected!.kind == VoucherKind.freeship) {
+        _pickedFreeship = widget.initialSelected;
+      } else {
+        _pickedDiscount = widget.initialSelected;
+      }
+    }
   }
 
   @override
@@ -115,6 +143,16 @@ class _VoucherSelectionSheetState extends State<VoucherSelectionSheet> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isShopee) {
+      return _buildShopeePage();
+    }
+    return _buildShopSheet();
+  }
+
+  // =========================================================
+  // SHOP VOUCHER — giữ layout cũ (bottom sheet)
+  // =========================================================
+  Widget _buildShopSheet() {
     final mediaHeight = MediaQuery.of(context).size.height;
     return DraggableScrollableSheet(
       initialChildSize: 0.75,
@@ -129,14 +167,58 @@ class _VoucherSelectionSheetState extends State<VoucherSelectionSheet> {
           ),
           child: Column(
             children: [
-              _header(),
-              _codeInput(),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 8, 6),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(widget.title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 22),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _codeCtrl,
+                        textCapitalization: TextCapitalization.characters,
+                        decoration: InputDecoration(
+                          hintText: 'Nhập mã Voucher',
+                          hintStyle: TextStyle(fontSize: 13.5, color: Colors.grey.shade500),
+                          isDense: true,
+                          errorText: _codeError,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                        ),
+                        onSubmitted: (_) => _applyCode(),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      height: 42,
+                      child: OutlinedButton(
+                        onPressed: _applyCode,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: orange,
+                          side: const BorderSide(color: orange),
+                        ),
+                        child: const Text('Áp dụng', style: TextStyle(fontWeight: FontWeight.w600)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               const Divider(height: 1),
               Expanded(
                 child: widget.vouchers.isEmpty
-                    ? const Center(
-                        child: Text('Không có voucher khả dụng', style: TextStyle(color: subText)),
-                      )
+                    ? const Center(child: Text('Không có voucher khả dụng', style: TextStyle(color: subText)))
                     : ListView.builder(
                         controller: scrollController,
                         padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
@@ -147,19 +229,30 @@ class _VoucherSelectionSheetState extends State<VoucherSelectionSheet> {
                           final selected = _picked?.id == v.id;
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 10),
-                            child: _voucherCard(
-                              v,
-                              eligible: eligible,
-                              selected: selected,
-                              onTap: eligible
-                                  ? () => setState(() => _picked = selected ? null : v)
-                                  : null,
-                            ),
+                            child: _shopVoucherCard(v, eligible: eligible, selected: selected),
                           );
                         },
                       ),
               ),
-              _bottomBar(),
+              SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 8, 14, 12),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 44,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context, VoucherPickResult(_picked)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: orange,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                      ),
+                      child: const Text('Đồng ý', style: TextStyle(fontWeight: FontWeight.w700)),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         );
@@ -167,199 +260,432 @@ class _VoucherSelectionSheetState extends State<VoucherSelectionSheet> {
     );
   }
 
-  Widget _header() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 8, 6),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              widget.title,
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.close, size: 22),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _codeInput() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _codeCtrl,
-              textCapitalization: TextCapitalization.characters,
-              decoration: InputDecoration(
-                hintText: 'Nhập mã Voucher',
-                hintStyle: TextStyle(fontSize: 13.5, color: Colors.grey.shade500),
-                isDense: true,
-                errorText: _codeError,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(6),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(6),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-              ),
-              onSubmitted: (_) => _applyCode(),
-            ),
-          ),
-          const SizedBox(width: 8),
-          SizedBox(
-            height: 42,
-            child: OutlinedButton(
-              onPressed: _applyCode,
-              style: OutlinedButton.styleFrom(
-                foregroundColor: orange,
-                side: const BorderSide(color: orange),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-              ),
-              child: const Text('Áp dụng', style: TextStyle(fontWeight: FontWeight.w600)),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _voucherCard(Voucher v, {required bool eligible, required bool selected, VoidCallback? onTap}) {
-    final progress = v.quantity > 0 ? (v.used / v.quantity).clamp(0.0, 1.0) : 0.0;
+  Widget _shopVoucherCard(Voucher v, {required bool eligible, required bool selected}) {
     return Opacity(
       opacity: eligible ? 1 : 0.5,
       child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
+        onTap: eligible ? () => setState(() => _picked = selected ? null : v) : null,
         child: Container(
           decoration: BoxDecoration(
+            border: Border.all(color: selected ? orange : Colors.grey.shade300),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: selected ? orange : Colors.grey.shade200),
           ),
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(v.title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                    const SizedBox(height: 4),
+                    Text(v.subtitle, style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600)),
+                    if (v.expiry.isNotEmpty)
+                      Text(v.expiry, style: TextStyle(fontSize: 11.5, color: Colors.grey.shade500)),
+                  ],
+                ),
+              ),
+              Icon(selected ? Icons.check_circle : Icons.radio_button_off, color: selected ? orange : Colors.grey.shade400),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // =========================================================
+  // SHOPEE VOUCHER — layout mới full page
+  // =========================================================
+  Widget _buildShopeePage() {
+    final shipList = widget.vouchers
+        .where((v) => v.kind == VoucherKind.freeship && v.isEligible(widget.orderTotal))
+        .toList();
+    final discList = widget.vouchers
+        .where((v) => v.kind != VoucherKind.freeship && v.isEligible(widget.orderTotal))
+        .toList();
+    final unavailList = widget.vouchers.where((v) => !v.isEligible(widget.orderTotal)).toList();
+
+    int savings = 0;
+    int selectedCount = 0;
+    if (_pickedFreeship != null) {
+      savings += _pickedFreeship!.calcDiscount(widget.orderTotal);
+      selectedCount++;
+    }
+    if (_pickedDiscount != null) {
+      savings += _pickedDiscount!.calcDiscount(widget.orderTotal);
+      selectedCount++;
+    }
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, size: 18, color: orange),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Chọn Shopee Voucher',
+          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 17, color: Colors.black87),
+        ),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.help_outline, color: Colors.grey.shade600),
+            onPressed: () {},
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          // Code input
+          Container(
+            color: Colors.white,
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _codeCtrl,
+                    textCapitalization: TextCapitalization.characters,
+                    decoration: InputDecoration(
+                      hintText: 'Nhập mã shopee voucher',
+                      hintStyle: TextStyle(fontSize: 13.5, color: Colors.grey.shade500),
+                      isDense: true,
+                      errorText: _codeError,
+                      filled: true,
+                      fillColor: const Color(0xFFF5F5F5),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(4),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                    onSubmitted: (_) => _applyCode(),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                SizedBox(
+                  height: 40,
+                  child: ElevatedButton(
+                    onPressed: _applyCode,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.grey.shade400,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                    ),
+                    child: const Text('Áp dụng'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.only(bottom: 16),
+              children: [
+                // Ưu đãi phí vận chuyển
+                _sectionTitle('Ưu đãi phí vận chuyển'),
+                ...shipList.take(_showMoreShip ? shipList.length : (shipList.isEmpty ? 0 : 1)).map((v) {
+                  final selected = _pickedFreeship?.id == v.id;
+                  return _shopeeVoucherCard(
+                    v,
+                    leftColor: const Color(0xFF26A69A),
+                    leftLabel: 'FREE\nSHIP',
+                    leftSub: 'Toàn Ngành Hàng',
+                    selected: selected,
+                    bestChoice: selected || v == shipList.first,
+                    onTap: () => setState(() {
+                      // Freeship độc lập với mã giảm giá — chọn 1 freeship
+                      _pickedFreeship = selected ? null : v;
+                    }),
+                  );
+                }),
+                if (shipList.length > 1)
+                  _seeMoreButton(
+                    expanded: _showMoreShip,
+                    onTap: () => setState(() => _showMoreShip = !_showMoreShip),
+                  ),
+
+                // Mã giảm giá / hoàn Xu
+                _sectionTitle('Mã giảm giá/hoàn Xu'),
+                ...discList.map((v) {
+                  final selected = _pickedDiscount?.id == v.id;
+                  final isSPay = v.title.toLowerCase().contains('spay') || v.code.contains('SPAY');
+                  return _shopeeVoucherCard(
+                    v,
+                    leftColor: orange,
+                    leftLabel: isSPay ? 'SPayLater' : 'SHOPEE',
+                    leftIcon: isSPay ? Icons.account_balance_wallet_outlined : Icons.shopping_bag_outlined,
+                    selected: selected,
+                    bestChoice: selected || v == discList.first,
+                    showUsageBar: true,
+                    onTap: () => setState(() {
+                      // Mã giảm giá độc lập với freeship — chọn 1 mã giảm
+                      _pickedDiscount = selected ? null : v;
+                    }),
+                  );
+                }),
+
+                // Không khả dụng
+                if (unavailList.isNotEmpty) ...[
+                  _sectionTitle('Voucher không khả dụng'),
+                  ...unavailList.take(_showMoreUnavailable ? unavailList.length : 1).map((v) {
+                    return _shopeeVoucherCard(
+                      v,
+                      leftColor: const Color(0xFFB2DFDB),
+                      leftLabel: 'FREE\nSHIP',
+                      leftSub: 'Tất cả hình thức\nthanh toán',
+                      selected: false,
+                      enabled: false,
+                      onTap: null,
+                    );
+                  }),
+                  if (unavailList.length > 1)
+                    _seeMoreButton(
+                      expanded: _showMoreUnavailable,
+                      onTap: () => setState(() => _showMoreUnavailable = !_showMoreUnavailable),
+                    ),
+                ],
+              ],
+            ),
+          ),
+          // Bottom summary + button
+          Container(
+            color: Colors.white,
+            padding: EdgeInsets.fromLTRB(14, 10, 14, MediaQuery.of(context).padding.bottom + 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (selectedCount > 0)
+                  Text.rich(
+                    TextSpan(
+                      style: TextStyle(fontSize: 12.5, color: Colors.grey.shade700),
+                      children: [
+                        TextSpan(text: '$selectedCount Voucher đã được chọn. '),
+                        if (_pickedFreeship != null)
+                          const TextSpan(
+                            text: 'Đã áp dụng ưu đãi phí vận chuyển',
+                            style: TextStyle(color: Color(0xFF00897B)),
+                          ),
+                        if (_pickedFreeship != null && _pickedDiscount != null)
+                          const TextSpan(text: ', ', style: TextStyle(color: Color(0xFF00897B))),
+                        if (_pickedDiscount != null)
+                          const TextSpan(
+                            text: 'mã giảm giá',
+                            style: TextStyle(color: Color(0xFF00897B)),
+                          ),
+                        if (savings > 0)
+                          TextSpan(
+                            text: ', giảm -${money(savings)}',
+                            style: const TextStyle(color: Color(0xFF00897B)),
+                          ),
+                      ],
+                    ),
+                  )
+                else
+                  Text('Chưa chọn voucher', style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600)),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  height: 46,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(
+                      context,
+                      VoucherPickResult(
+                        _pickedDiscount ?? _pickedFreeship,
+                        freeshipVoucher: _pickedFreeship,
+                        discountVoucher: _pickedDiscount,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: orange,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    ),
+                    child: const Text('Đồng ý', style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sectionTitle(String text) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
+      child: Text(text, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF222222))),
+    );
+  }
+
+  Widget _seeMoreButton({required bool expanded, required VoidCallback onTap}) {
+    return Center(
+      child: TextButton(
+        onPressed: onTap,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(expanded ? 'Thu gọn' : 'Xem thêm', style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+            Icon(expanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down, size: 18, color: Colors.grey.shade600),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _shopeeVoucherCard(
+    Voucher v, {
+    required Color leftColor,
+    required String leftLabel,
+    String? leftSub,
+    IconData? leftIcon,
+    required bool selected,
+    bool bestChoice = false,
+    bool enabled = true,
+    bool showUsageBar = false,
+    VoidCallback? onTap,
+  }) {
+    final usedPct = v.quantity > 0 ? (v.used / v.quantity).clamp(0.0, 1.0) : 0.0;
+
+    return Opacity(
+      opacity: enabled ? 1 : 0.55,
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: selected ? orange.withValues(alpha: 0.5) : Colors.grey.shade200),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: enabled ? onTap : null,
           child: IntrinsicHeight(
             child: Row(
               children: [
+                // Left tab
                 Container(
-                  width: 84,
-                  decoration: BoxDecoration(
-                    color: v.kind == VoucherKind.freeship
-                        ? const Color(0xFFEAF7F1)
-                        : orange.withOpacity(0.08),
-                    borderRadius: const BorderRadius.horizontal(left: Radius.circular(8)),
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
-                  alignment: Alignment.center,
+                  width: 88,
+                  color: leftColor,
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        v.kind == VoucherKind.freeship ? Icons.local_shipping : Icons.confirmation_number,
-                        color: v.kind == VoucherKind.freeship ? const Color(0xFF26A69A) : orange,
-                        size: 22,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        v.kind == VoucherKind.freeship ? 'FREESHIP' : 'GIẢM GIÁ',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 9.5,
-                          fontWeight: FontWeight.w700,
-                          color: v.kind == VoucherKind.freeship ? const Color(0xFF26A69A) : orange,
+                      if (leftIcon != null)
+                        Icon(leftIcon, color: Colors.white, size: 26)
+                      else
+                        Text(
+                          leftLabel,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 15,
+                            height: 1.15,
+                          ),
                         ),
-                      ),
+                      if (leftIcon != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          leftLabel,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                      if (leftSub != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          leftSub,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 10, height: 1.2),
+                        ),
+                      ],
                     ],
                   ),
                 ),
-                CustomPaint(
-                  size: const Size(1, double.infinity),
-                  painter: _DashedLinePainter(color: Colors.grey.shade300),
-                ),
+                // Content
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 10, 6, 10),
+                    padding: const EdgeInsets.fromLTRB(10, 10, 8, 10),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                v.title,
-                                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                        if (bestChoice && enabled)
+                          Align(
+                            alignment: Alignment.topRight,
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 4),
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFE0E0),
+                                borderRadius: BorderRadius.circular(3),
                               ),
-                            ),
-                            if (v.shopName != null)
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey.shade100,
-                                  borderRadius: BorderRadius.circular(3),
-                                ),
-                                child: Text(
-                                  v.shopName!,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(fontSize: 9.5, color: Colors.grey.shade600, fontWeight: FontWeight.w600),
-                                ),
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          v.subtitle,
-                          style: const TextStyle(fontSize: 12, color: subText),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          v.expiry,
-                          style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
-                        ),
-                        const SizedBox(height: 6),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(3),
-                          child: LinearProgressIndicator(
-                            value: progress,
-                            minHeight: 4,
-                            backgroundColor: Colors.grey.shade200,
-                            valueColor: AlwaysStoppedAnimation(
-                              progress > 0.85 ? orange : Colors.grey.shade400,
+                              child: const Text('Lựa chọn tốt nhất', style: TextStyle(color: orange, fontSize: 10, fontWeight: FontWeight.w600)),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 2),
                         Text(
-                          progress > 0.85 ? 'Sắp hết' : 'Còn ${v.quantity - v.used} voucher',
-                          style: TextStyle(fontSize: 10.5, color: Colors.grey.shade500),
+                          v.title,
+                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Color(0xFF222222)),
                         ),
-                        if (!eligible) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          v.minSpend > 0 ? 'Đơn tối thiểu ${money(v.minSpend)}' : v.subtitle,
+                          style: TextStyle(fontSize: 12.5, color: Colors.grey.shade700),
+                        ),
+                        if (v.expiry.isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text.rich(
+                            TextSpan(
+                              style: TextStyle(fontSize: 11.5, color: Colors.grey.shade500),
+                              children: [
+                                TextSpan(text: '${v.expiry} '),
+                                const TextSpan(text: 'Điều kiện', style: TextStyle(color: Color(0xFF1976D2))),
+                              ],
+                            ),
+                          ),
+                        ],
+                        if (showUsageBar && usedPct > 0.5) ...[
+                          const SizedBox(height: 6),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(2),
+                            child: LinearProgressIndicator(
+                              value: usedPct,
+                              minHeight: 4,
+                              backgroundColor: Colors.grey.shade200,
+                              valueColor: const AlwaysStoppedAnimation(Color(0xFFFF9800)),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Đã dùng ${(usedPct * 100).round()}%',
+                            style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                          ),
+                        ],
+                        if (!enabled) ...[
                           const SizedBox(height: 4),
                           Text(
-                            'Chưa đủ điều kiện (đơn tối thiểu ${money(v.minSpend)})',
-                            style: const TextStyle(fontSize: 11, color: Colors.redAccent),
+                            'Sản phẩm hoặc Người bán không thỏa điều kiện voucher',
+                            style: TextStyle(fontSize: 11.5, color: Colors.grey.shade500),
                           ),
                         ],
                       ],
                     ),
                   ),
                 ),
+                // Radio
                 Padding(
                   padding: const EdgeInsets.only(right: 10),
-                  child: eligible
-                      ? Icon(
-                          selected ? Icons.check_circle : Icons.radio_button_unchecked,
-                          color: selected ? orange : Colors.grey.shade300,
-                          size: 22,
-                        )
-                      : const Icon(Icons.lock_outline, color: Colors.grey, size: 20),
+                  child: Icon(
+                    selected ? Icons.check_circle : Icons.radio_button_off,
+                    color: selected ? orange : Colors.grey.shade400,
+                    size: 22,
+                  ),
                 ),
               ],
             ),
@@ -369,63 +695,84 @@ class _VoucherSelectionSheetState extends State<VoucherSelectionSheet> {
     );
   }
 
-  Widget _bottomBar() {
-    final discount = _picked?.calcDiscount(widget.orderTotal) ?? 0;
-    return Material(
-      elevation: 8,
-      color: Colors.white,
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  _picked != null ? 'Tiết kiệm ${money(discount)}' : 'Chưa chọn voucher',
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                ),
-              ),
-              SizedBox(
-                height: 42,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context, VoucherPickResult(_picked)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: orange,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 26),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                  ),
-                  child: const Text('OK', style: TextStyle(fontWeight: FontWeight.w700)),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
+  // Demo data khi list rỗng — để UI giống ảnh
+  static final List<Voucher> _demoFreeship = [
+    const Voucher(
+      id: 'demo_fs1',
+      code: 'FREESHIPXTRA',
+      title: 'Miễn phí vận chuyển',
+      source: VoucherSource.platform,
+      kind: VoucherKind.freeship,
+      discountType: VoucherDiscountType.fixed,
+      discountValue: 25000,
+      minSpend: 50000,
+      expiry: 'HSD: 16.08.2026',
+      quantity: 100,
+      used: 40,
+    ),
+  ];
 
-class _DashedLinePainter extends CustomPainter {
-  final Color color;
-  _DashedLinePainter({required this.color});
+  static final List<Voucher> _demoDiscount = [
+    const Voucher(
+      id: 'demo_d1',
+      code: 'SPAY18',
+      title: 'Giảm 18% Giảm tối đa 300kđ',
+      source: VoucherSource.platform,
+      discountType: VoucherDiscountType.percent,
+      discountValue: 18,
+      maxDiscount: 300000,
+      minSpend: 300000,
+      expiry: 'hết hạn 14.08.2026',
+      quantity: 100,
+      used: 74,
+    ),
+    const Voucher(
+      id: 'demo_d2',
+      code: 'SALE20K',
+      title: 'Giảm 20kđ',
+      source: VoucherSource.platform,
+      discountType: VoucherDiscountType.fixed,
+      discountValue: 20000,
+      minSpend: 200000,
+      expiry: 'HSD: 20.08.2026',
+      quantity: 100,
+      used: 30,
+    ),
+    const Voucher(
+      id: 'demo_d3',
+      code: 'SALE15K',
+      title: 'Giảm 15kđ',
+      source: VoucherSource.platform,
+      discountType: VoucherDiscountType.fixed,
+      discountValue: 15000,
+      minSpend: 100000,
+      expiry: 'hết hạn trong: Còn 2 ngày',
+      quantity: 100,
+      used: 93,
+    ),
+    const Voucher(
+      id: 'demo_d4',
+      code: 'SALE5K',
+      title: 'Giảm 5kđ',
+      source: VoucherSource.platform,
+      discountType: VoucherDiscountType.fixed,
+      discountValue: 5000,
+      minSpend: 99000,
+      expiry: 'HSD: 20.08.2026',
+    ),
+  ];
 
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 1;
-    const dashHeight = 4.0;
-    const dashSpace = 3.0;
-    double y = 0;
-    while (y < size.height) {
-      canvas.drawLine(Offset(0, y), Offset(0, y + dashHeight), paint);
-      y += dashHeight + dashSpace;
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _DashedLinePainter oldDelegate) => oldDelegate.color != color;
+  static final List<Voucher> _demoUnavailable = [
+    const Voucher(
+      id: 'demo_u1',
+      code: 'FS40K',
+      title: 'Giảm tối đa 40kđ',
+      source: VoucherSource.platform,
+      kind: VoucherKind.freeship,
+      discountType: VoucherDiscountType.fixed,
+      discountValue: 40000,
+      minSpend: 999999999, // không đủ điều kiện
+      expiry: 'HSD: 15.08.2026',
+    ),
+  ];
 }

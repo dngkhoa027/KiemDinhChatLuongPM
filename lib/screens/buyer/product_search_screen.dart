@@ -11,7 +11,11 @@ class ProductSearchScreen extends StatefulWidget {
   /// người dùng bấm vào — dùng làm hint mặc định ở đây cho liền mạch.
   final String? initialHint;
 
-  const ProductSearchScreen({super.key, this.initialHint});
+  /// Nếu được truyền, tự động điền + chạy tìm kiếm luôn khi mở màn (dùng
+  /// khi mở từ kết quả quét mã QR hoặc tìm kiếm bằng hình ảnh).
+  final String? initialQuery;
+
+  const ProductSearchScreen({super.key, this.initialHint, this.initialQuery});
 
   @override
   State<ProductSearchScreen> createState() => _ProductSearchScreenState();
@@ -80,7 +84,14 @@ class _ProductSearchScreenState extends State<ProductSearchScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _focusNode.requestFocus());
+    if (widget.initialQuery != null && widget.initialQuery!.trim().isNotEmpty) {
+      _controller.text = widget.initialQuery!.trim();
+      _query = widget.initialQuery!.trim();
+      _submitted = true;
+      _recentSearches.insert(0, widget.initialQuery!.trim());
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _focusNode.requestFocus());
+    }
     _loadProducts();
   }
 
@@ -262,7 +273,7 @@ class _ProductSearchScreenState extends State<ProductSearchScreen> {
     }
     return ListView.separated(
       itemCount: suggestions.length,
-      separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey.shade200),
+      separatorBuilder: (_, _) => Divider(height: 1, color: Colors.grey.shade200),
       itemBuilder: (context, i) => _suggestionRow(suggestions[i]),
     );
   }

@@ -148,14 +148,13 @@ class _ShopeeLoginPageState extends State<ShopeeLoginPage>
                       Container(
                         width: 90,
                         height: 90,
+                        clipBehavior: Clip.antiAlias,
                         decoration: BoxDecoration(
-                          color: Colors.white,
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: const Icon(
-                          Icons.shopping_bag,
-                          color: shopeeOrange,
-                          size: 50,
+                        child: Image.asset(
+                          'assets/picture/Shopee_Logo.png',
+                          fit: BoxFit.cover,
                         ),
                       ),
 
@@ -475,7 +474,7 @@ class _ShopeeLoginPageState extends State<ShopeeLoginPage>
 
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Colors.black.withValues(alpha: 0.04),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),

@@ -45,7 +45,7 @@ extension OrderStatusX on OrderStatus {
       case OrderStatus.completed:
         return 'Hoàn thành';
       case OrderStatus.cancelled:
-        return 'Đã hủy';
+        return 'Hoàn tiền thành công';
     }
   }
 

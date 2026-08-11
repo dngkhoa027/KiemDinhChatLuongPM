@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'cart_screen.dart';
 import 'product_detail_screen.dart';
+import 'product_search_screen.dart';
+import 'qr_scan_screen.dart';
 import '../../data/mock_data.dart';
 import '../../models/product_model.dart';
 import '../../services/product_api_service.dart';
@@ -175,19 +177,41 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.search, color: Colors.grey.shade500, size: 20),
-                  const SizedBox(width: 8),
-                  const Expanded(
-                    child: Text(
-                      'Shopee Mall',
-                      style: TextStyle(
-                        color: mallRed,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
+                  Expanded(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const ProductSearchScreen(initialHint: 'Shopee Mall')),
+                        );
+                      },
+                      child: Row(
+                        children: [
+                          Icon(Icons.search, color: Colors.grey.shade500, size: 20),
+                          const SizedBox(width: 8),
+                          const Expanded(
+                            child: Text(
+                              'Shopee Mall',
+                              style: TextStyle(
+                                color: mallRed,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                  Icon(Icons.camera_alt_outlined, color: Colors.grey.shade500, size: 20),
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const QrScanScreen()),
+                      );
+                    },
+                    child: Icon(Icons.camera_alt_outlined, color: Colors.grey.shade500, size: 20),
+                  ),
                 ],
               ),
             ),
@@ -326,7 +350,7 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
               child: Image.network(
                 imageUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const SizedBox(),
+                errorBuilder: (_, _, _) => const SizedBox(),
               ),
             ),
           // Gradient che bên trái để chữ rõ
@@ -336,8 +360,8 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
                 gradient: LinearGradient(
                   colors: [
                     const Color(0xFFD32F2F),
-                    const Color(0xFFD32F2F).withOpacity(0.92),
-                    const Color(0xFFE53935).withOpacity(0.55),
+                    const Color(0xFFD32F2F).withValues(alpha: 0.92),
+                    const Color(0xFFE53935).withValues(alpha: 0.55),
                     Colors.transparent,
                   ],
                   stops: const [0.0, 0.38, 0.62, 1.0],
@@ -377,7 +401,7 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.22),
+                        color: Colors.white.withValues(alpha: 0.22),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: const Text(
@@ -411,7 +435,7 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
                 const SizedBox(height: 6),
                 Text(
                   date,
-                  style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 11),
+                  style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 11),
                 ),
               ],
             ),
@@ -521,7 +545,7 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
             bottom: 8,
             child: Row(
               children: [
-                Icon(Icons.spa, color: Colors.white.withOpacity(0.9), size: 40),
+                Icon(Icons.spa, color: Colors.white.withValues(alpha: 0.9), size: 40),
                 const SizedBox(width: 8),
                 const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -594,7 +618,7 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: cats.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 14),
+              separatorBuilder: (_, _) => const SizedBox(width: 14),
               itemBuilder: (context, index) {
                 final c = cats[index];
                 return SizedBox(
@@ -607,7 +631,7 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
                           width: 58,
                           height: 58,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
+                          errorBuilder: (_, _, _) => Container(
                             width: 58,
                             height: 58,
                             color: Colors.grey.shade200,
@@ -651,7 +675,7 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
           Positioned(
             left: 12,
             bottom: 8,
-            child: Icon(Icons.card_giftcard, size: 90, color: Colors.amber.withOpacity(0.35)),
+            child: Icon(Icons.card_giftcard, size: 90, color: Colors.amber.withValues(alpha: 0.35)),
           ),
           Positioned(
             top: 10,
@@ -841,7 +865,7 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 10),
               itemCount: items.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
               itemBuilder: (context, index) => _buildMallProductCard(items[index], width: 148, premium: premium),
             ),
           ),
@@ -874,7 +898,7 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
                           p.thumbnail,
                           fit: BoxFit.cover,
                           width: double.infinity,
-                          errorBuilder: (_, __, ___) => Container(
+                          errorBuilder: (_, _, _) => Container(
                             color: Colors.grey.shade200,
                             child: const Icon(Icons.image_not_supported_outlined),
                           ),
@@ -899,7 +923,7 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
                   bottom: 0,
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 4),
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha: 0.04),
                     child: Row(
                       children: [
                         _miniPromo('8.8', mallRed),
@@ -945,7 +969,7 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                     decoration: BoxDecoration(
-                      border: Border.all(color: mallRed.withOpacity(0.5)),
+                      border: Border.all(color: mallRed.withValues(alpha: 0.5)),
                       borderRadius: BorderRadius.circular(3),
                     ),
                     child: const Text('Mua để nhận quà', style: TextStyle(color: mallRed, fontSize: 9.5)),
@@ -1022,7 +1046,7 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: vouchers.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              separatorBuilder: (_, _) => const SizedBox(width: 10),
               itemBuilder: (context, index) => _buildVoucherCard(vouchers[index]),
             ),
           ),
@@ -1054,7 +1078,7 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
                     width: 44,
                     height: 44,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
+                    errorBuilder: (_, _, _) => Container(
                       width: 44,
                       height: 44,
                       color: Colors.grey.shade200,
@@ -1146,7 +1170,7 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         itemCount: brands.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (context, i) {
           return ClipRRect(
             borderRadius: BorderRadius.circular(8),
@@ -1155,7 +1179,7 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
               width: 120,
               height: 110,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(width: 120, color: Colors.grey.shade200),
+              errorBuilder: (_, _, _) => Container(width: 120, color: Colors.grey.shade200),
             ),
           );
         },
@@ -1232,7 +1256,7 @@ class _ShopeeMallPageState extends State<ShopeeMallPage> {
                             p.thumbnail,
                             fit: BoxFit.cover,
                             width: double.infinity,
-                            errorBuilder: (_, __, ___) =>
+                            errorBuilder: (_, _, _) =>
                                 const Icon(Icons.image_not_supported_outlined, color: Colors.grey),
                           ),
                   ),

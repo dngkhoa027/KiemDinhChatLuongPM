@@ -493,7 +493,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 16, offset: const Offset(0, 6))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 16, offset: const Offset(0, 6))],
       ),
       padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
       child: Column(
@@ -515,9 +515,9 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              color: (current['color'] as Color).withOpacity(0.08),
+              color: (current['color'] as Color).withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: (current['color'] as Color).withOpacity(0.35)),
+              border: Border.all(color: (current['color'] as Color).withValues(alpha: 0.35)),
             ),
             child: Row(
               children: [
@@ -536,7 +536,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: _tiers.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              separatorBuilder: (_, _) => const SizedBox(width: 10),
               itemBuilder: (context, index) {
                 final tier = _tiers[index];
                 final selected = tier['name'] == _membershipTier;
@@ -551,7 +551,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                     width: 72,
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: BoxDecoration(
-                      color: selected ? color.withOpacity(0.1) : Colors.grey.shade50,
+                      color: selected ? color.withValues(alpha: 0.1) : Colors.grey.shade50,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: selected ? color : Colors.grey.shade200, width: selected ? 1.4 : 1),
                     ),
@@ -587,7 +587,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 16, offset: const Offset(0, 6))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 16, offset: const Offset(0, 6))],
       ),
       padding: const EdgeInsets.fromLTRB(18, 18, 18, 6),
       child: Column(
@@ -694,7 +694,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                 height: 42,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: selected ? shopeeOrange.withOpacity(0.08) : Colors.grey.shade50,
+                  color: selected ? shopeeOrange.withValues(alpha: 0.08) : Colors.grey.shade50,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: selected ? shopeeOrange : Colors.grey.shade300),
                 ),
@@ -720,7 +720,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 16, offset: const Offset(0, 6))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 16, offset: const Offset(0, 6))],
       ),
       padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
       child: Column(
@@ -807,7 +807,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 12, offset: const Offset(0, -3))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, -3))],
       ),
       child: SafeArea(
         top: false,

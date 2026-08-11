@@ -104,12 +104,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   late final List<Voucher> _shopVouchers = MockData.shopVouchers(_primaryShopName);
   final List<Voucher> _platformVouchers = MockData.platformVouchers;
   Voucher? _selectedShopVoucher;
-  Voucher? _selectedPlatformVoucher;
+  Voucher? _selectedPlatformFreeship;
+  Voucher? _selectedPlatformDiscount;
+
+  // Shipping / message / e-invoice
+  String _shippingMethod = 'Hôm Nay 21:00';
+  String _shopMessage = '';
+  bool _requestEInvoice = false;
 
   int get shopVoucherDiscount =>
       _selectedShopVoucher?.calcDiscount(itemsTotal) ?? 0;
-  int get platformVoucherDiscount =>
-      _selectedPlatformVoucher?.calcDiscount(itemsTotal) ?? 0;
+  int get platformFreeshipDiscount =>
+      _selectedPlatformFreeship?.calcDiscount(itemsTotal) ?? 0;
+  int get platformDiscountVoucher =>
+      _selectedPlatformDiscount?.calcDiscount(itemsTotal) ?? 0;
+  int get platformVoucherDiscount => platformFreeshipDiscount + platformDiscountVoucher;
   int get totalVoucherDiscount => shopVoucherDiscount + platformVoucherDiscount;
 
   /// Mở sheet chọn Voucher CỦA RIÊNG SHOP này — chỉ hiện voucher do Shop
@@ -126,17 +135,30 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     setState(() => _selectedShopVoucher = result.voucher);
   }
 
-  /// Mở sheet chọn Voucher Shopee toàn sàn — RIÊNG, không lẫn với Voucher Shop.
+  /// Mở trang chọn Voucher Shopee — có thể chọn đồng thời freeship + mã giảm giá.
   Future<void> _openPlatformVoucherSheet() async {
     final result = await VoucherSelectionSheet.show(
       context,
       title: 'Voucher của Shopee',
       vouchers: _platformVouchers,
       orderTotal: itemsTotal,
-      initialSelected: _selectedPlatformVoucher,
+      initialSelected: _selectedPlatformDiscount ?? _selectedPlatformFreeship,
     );
     if (result == null || !mounted) return;
-    setState(() => _selectedPlatformVoucher = result.voucher);
+    setState(() {
+      _selectedPlatformFreeship = result.freeshipVoucher;
+      _selectedPlatformDiscount = result.discountVoucher;
+      // fallback nếu sheet cũ chỉ trả voucher đơn
+      if (result.freeshipVoucher == null &&
+          result.discountVoucher == null &&
+          result.voucher != null) {
+        if (result.voucher!.kind == VoucherKind.freeship) {
+          _selectedPlatformFreeship = result.voucher;
+        } else {
+          _selectedPlatformDiscount = result.voucher;
+        }
+      }
+    });
   }
 
   @override
@@ -437,7 +459,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 width: 80,
                 height: 80,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
+                errorBuilder: (_, _, _) => Container(
                   width: 80,
                   height: 80,
                   color: Colors.grey.shade200,
@@ -468,7 +490,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      border: Border.all(color: orange.withOpacity(0.7)),
+                      border: Border.all(color: orange.withValues(alpha: 0.7)),
                       borderRadius: BorderRadius.circular(3),
                     ),
                     child: const Text(
@@ -661,7 +683,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ? Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    border: Border.all(color: orange.withOpacity(0.6)),
+                    border: Border.all(color: orange.withValues(alpha: 0.6)),
                     borderRadius: BorderRadius.circular(3),
                   ),
                   child: Text(
@@ -676,15 +698,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         const Divider(height: 1, thickness: 0.5),
         _optionRow(
           title: 'Lời nhắn cho Shop',
-          trailingText: 'Để lại lời nhắn',
-          trailingGrey: true,
+          trailingText: _shopMessage.isEmpty ? 'Để lại lời nhắn' : _shopMessage,
+          trailingGrey: _shopMessage.isEmpty,
+          onTap: _openShopMessageDialog,
         ),
         const Divider(height: 1, thickness: 0.5),
         _optionRow(
           title: 'Hóa đơn điện tử',
           titleSuffix: const Icon(Icons.help_outline, size: 14, color: Colors.grey),
-          trailingText: 'Yêu cầu',
-          trailingGrey: true,
+          trailingText: _requestEInvoice ? 'Đã yêu cầu' : 'Yêu cầu',
+          trailingGrey: !_requestEInvoice,
+          onTap: _openEInvoiceDialog,
         ),
       ],
     );
@@ -729,24 +753,27 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            const Expanded(
-              child: Text(
-                'Phương thức vận chuyển',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5),
+        InkWell(
+          onTap: _openShippingPicker,
+          child: Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Phương thức vận chuyển',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5),
+                ),
               ),
-            ),
-            Text('Xem tất cả', style: TextStyle(fontSize: 12.5, color: Colors.grey.shade500)),
-            Icon(Icons.chevron_right, size: 16, color: Colors.grey.shade400),
-          ],
+              Text('Xem tất cả', style: TextStyle(fontSize: 12.5, color: Colors.grey.shade500)),
+              Icon(Icons.chevron_right, size: 16, color: Colors.grey.shade400),
+            ],
+          ),
         ),
         const SizedBox(height: 10),
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: green.withOpacity(0.55)),
+            border: Border.all(color: green.withValues(alpha: 0.55)),
             color: const Color(0xFFF1FAF8),
           ),
           child: Row(
@@ -754,16 +781,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             children: [
               const Icon(Icons.check_circle, color: green, size: 18),
               const SizedBox(width: 8),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '9 Thg 8 - 11 Thg 8',
-                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5, color: Colors.black87),
+                      _shippingMethod,
+                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5, color: Colors.black87),
                     ),
-                    SizedBox(height: 2),
-                    Text('Nhanh', style: TextStyle(fontSize: 12.5, color: subText)),
+                    const SizedBox(height: 2),
+                    const Text('Nhanh', style: TextStyle(fontSize: 12.5, color: subText)),
                   ],
                 ),
               ),
@@ -836,7 +863,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 width: 22,
                 height: 22,
                 decoration: BoxDecoration(
-                  color: orange.withOpacity(0.12),
+                  color: orange.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: const Icon(Icons.confirmation_number, color: orange, size: 14),
@@ -845,23 +872,45 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               const Expanded(
                 child: Text('Shopee Voucher', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5)),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  border: Border.all(color: _selectedPlatformVoucher != null ? orange : green),
-                  borderRadius: BorderRadius.circular(3),
-                ),
-                child: Text(
-                  _selectedPlatformVoucher != null
-                      ? '-${money(platformVoucherDiscount)}'
-                      : 'Miễn Phí Vận Chuyển',
-                  style: TextStyle(
-                    color: _selectedPlatformVoucher != null ? orange : green,
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w600,
+              // Hiển thị 1-2 tag theo voucher đã chọn (giảm giá + freeship)
+              if (_selectedPlatformDiscount != null)
+                Container(
+                  margin: const EdgeInsets.only(right: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: orange),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                  child: Text(
+                    '-${money(platformDiscountVoucher)}',
+                    style: const TextStyle(color: orange, fontSize: 11.5, fontWeight: FontWeight.w600),
                   ),
                 ),
-              ),
+              if (_selectedPlatformFreeship != null)
+                Container(
+                  margin: const EdgeInsets.only(right: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: green),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                  child: const Text(
+                    'Miễn Phí Vận Chuyển',
+                    style: TextStyle(color: Color(0xFF26A69A), fontSize: 11.5, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              if (_selectedPlatformFreeship == null && _selectedPlatformDiscount == null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: green),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                  child: const Text(
+                    'Chọn Voucher',
+                    style: TextStyle(color: Color(0xFF26A69A), fontSize: 11.5, fontWeight: FontWeight.w600),
+                  ),
+                ),
               Icon(Icons.chevron_right, size: 18, color: Colors.grey.shade400),
             ],
           ),
@@ -977,42 +1026,350 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   // ===================== PHƯƠNG THỨC THANH TOÁN =====================
+  /// Tính trả góp SPayLater theo tổng đơn thật.
+  /// x1 tháng: 0% phí. Các kỳ khác: có phí (tỷ lệ tăng theo số kỳ).
+  ({int perMonth, int feePerMonth}) _spayInstallment(int total, int months) {
+    if (months <= 1) return (perMonth: total, feePerMonth: 0);
+    // Tổng phí ước lượng: 2 tháng ~2.8%, 3 tháng ~4.5%, 6 ~8%, 12 ~12%
+    final rate = switch (months) {
+      2 => 0.028,
+      3 => 0.045,
+      6 => 0.08,
+      12 => 0.12,
+      _ => 0.03 * (months / 2),
+    };
+    final totalFee = (total * rate).round();
+    final feePerMonth = (totalFee / months).round();
+    final perMonth = ((total + totalFee) / months).round();
+    return (perMonth: perMonth, feePerMonth: feePerMonth);
+  }
+
   Widget _paymentSection() {
-    return InkWell(
-      onTap: _openPaymentMethodPicker,
-      child: Row(
-        children: [
-          const Expanded(
-            child: Text(
-              'Phương thức thanh toán',
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5),
-            ),
+    final isSPay = _selectedPaymentMethod.id == 'spaylater';
+    final amount = grandTotal > 0 ? grandTotal : itemsTotal;
+    final i1 = _spayInstallment(amount, 1);
+    final i2 = _spayInstallment(amount, 2);
+    final i3 = _spayInstallment(amount, 3);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: _openPaymentMethodPicker,
+          child: Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Phương thức thanh toán',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5),
+                ),
+              ),
+              Text('Xem tất cả', style: TextStyle(fontSize: 12.5, color: Colors.grey.shade500)),
+              Icon(Icons.chevron_right, size: 16, color: Colors.grey.shade400),
+            ],
           ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(color: orange, borderRadius: BorderRadius.circular(3)),
+              child: const Center(
+                child: Text('S', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11)),
+              ),
+            ),
+            const SizedBox(width: 6),
+            const Text('ShopeePay', style: TextStyle(color: orange, fontWeight: FontWeight.w700, fontSize: 14)),
+          ],
+        ),
+        if (isSPay) ...[
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF0EB),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Icon(Icons.schedule, color: orange, size: 18),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'SPayLater (15.000.000đ)',
+                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Có thể kết hợp hạn mức SPayLater với một phương thức thanh toán khác',
+                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600, height: 1.3),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.check_circle, color: orange, size: 22),
+            ],
+          ),
+          const SizedBox(height: 10),
           Container(
-            width: 28,
-            height: 28,
-            alignment: Alignment.center,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
             decoration: BoxDecoration(
-              color: (_selectedPaymentMethod.iconBg ?? _selectedPaymentMethod.iconColor.withOpacity(0.1)),
-              borderRadius: BorderRadius.circular(6),
+              color: const Color(0xFFFFF5F0),
+              borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(_selectedPaymentMethod.icon, color: _selectedPaymentMethod.iconColor, size: 15),
-          ),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Text(
-              _selectedPaymentMethod.id == 'spaylater'
-                  ? '${_selectedPaymentMethod.title} (x$_installmentMonths tháng)'
-                  : _selectedPaymentMethod.title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: Colors.black87),
+            child: Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Áp dụng cùng chương trình Shopee Hoàn Xu',
+                    style: TextStyle(fontSize: 12.5, color: Color(0xFF555555)),
+                  ),
+                ),
+                Container(
+                  width: 32,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: orange,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Icon(Icons.percent, color: Colors.white, size: 16),
+                ),
+              ],
             ),
           ),
-          const SizedBox(width: 2),
-          Icon(Icons.chevron_right, size: 18, color: Colors.grey.shade400),
+          const SizedBox(height: 12),
+          // Lưới 2 cột giống Shopee
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 2,
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
+            childAspectRatio: 1.55,
+            children: [
+              _installmentChip(
+                months: 1,
+                perMonth: i1.perMonth,
+                feePerMonth: i1.feePerMonth,
+                selected: _installmentMonths == 1,
+                suggested: true,
+              ),
+              _installmentChip(
+                months: 2,
+                perMonth: i2.perMonth,
+                feePerMonth: i2.feePerMonth,
+                selected: _installmentMonths == 2,
+              ),
+              _installmentChip(
+                months: 3,
+                perMonth: i3.perMonth,
+                feePerMonth: i3.feePerMonth,
+                selected: _installmentMonths == 3,
+              ),
+              InkWell(
+                onTap: _openPaymentMethodPicker,
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('Xem thêm', style: TextStyle(fontSize: 13.5, color: Colors.grey.shade700)),
+                      Icon(Icons.chevron_right, size: 18, color: Colors.grey.shade500),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ] else ...[
+          const SizedBox(height: 12),
+          InkWell(
+            onTap: _openPaymentMethodPicker,
+            child: Row(
+              children: [
+                Icon(_selectedPaymentMethod.icon, color: _selectedPaymentMethod.iconColor, size: 22),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    _selectedPaymentMethod.title,
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                  ),
+                ),
+                const Icon(Icons.check_circle, color: orange, size: 20),
+              ],
+            ),
+          ),
+        ],
+        const SizedBox(height: 14),
+        // Thẻ tín dụng / nội địa — bấm chọn được
+        InkWell(
+          onTap: () async {
+            await _openPaymentMethodPicker();
+          },
+          child: Row(
+            children: [
+              const Icon(Icons.credit_card, color: Color(0xFF1565C0), size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _selectedPaymentMethod.id == 'credit_card' || _selectedPaymentMethod.id == 'napas'
+                          ? _selectedPaymentMethod.title
+                          : 'Thẻ Tín dụng/Ghi nợ',
+                      style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w500),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        _miniTag('Giảm thêm 50.000đ'),
+                        const SizedBox(width: 6),
+                        _miniTag('Giảm thêm 55.000đ'),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              OutlinedButton(
+                onPressed: _openPaymentMethodPicker,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: orange,
+                  side: const BorderSide(color: orange),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  minimumSize: Size.zero,
+                  visualDensity: VisualDensity.compact,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                ),
+                child: Text(
+                  (_selectedPaymentMethod.id == 'credit_card' || _selectedPaymentMethod.id == 'napas')
+                      ? 'Đổi'
+                      : 'Thêm',
+                  style: const TextStyle(fontSize: 12.5),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _installmentChip({
+    required int months,
+    required int perMonth,
+    required int feePerMonth,
+    required bool selected,
+    bool suggested = false,
+  }) {
+    return GestureDetector(
+      onTap: () => setState(() {
+        _selectedPaymentMethod = findPaymentMethodById('spaylater');
+        _installmentMonths = months;
+      }),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(
+                color: selected ? orange : Colors.grey.shade300,
+                width: selected ? 1.4 : 1,
+              ),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  money(perMonth),
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: selected ? orange : const Color(0xFF222222),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'x$months tháng',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: selected ? orange : Colors.grey.shade700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                if (feePerMonth <= 0)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: selected ? orange : Colors.grey.shade400),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                    child: Text(
+                      '0% Phí',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        color: selected ? orange : Colors.grey.shade600,
+                      ),
+                    ),
+                  )
+                else
+                  Text(
+                    'Gồm ${money(feePerMonth)} phí / kỳ',
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                  ),
+              ],
+            ),
+          ),
+          if (suggested)
+            Positioned(
+              left: 0,
+              top: 0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: const BoxDecoration(
+                  color: orange,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(7),
+                    bottomRight: Radius.circular(6),
+                  ),
+                ),
+                child: const Text(
+                  'Đề xuất',
+                  style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
         ],
       ),
+    );
+  }
+
+  Widget _miniTag(String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      decoration: BoxDecoration(
+        border: Border.all(color: orange.withValues(alpha: 0.55)),
+        borderRadius: BorderRadius.circular(2),
+      ),
+      child: Text(text, style: const TextStyle(color: orange, fontSize: 11)),
     );
   }
 
@@ -1023,6 +1380,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         builder: (_) => PaymentMethodScreen(
           selectedId: _selectedPaymentMethod.id,
           initialInstallmentMonths: _installmentMonths,
+          orderTotal: grandTotal,
         ),
       ),
     );
@@ -1033,6 +1391,89 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         _installmentMonths = result.installmentMonths!;
       }
     });
+  }
+
+  Future<void> _openShopMessageDialog() async {
+    final ctrl = TextEditingController(text: _shopMessage);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Lời nhắn cho Shop', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+        content: TextField(
+          controller: ctrl,
+          maxLines: 3,
+          maxLength: 200,
+          decoration: const InputDecoration(
+            hintText: 'Lưu ý cho Người bán...',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
+            child: const Text('Xong', style: TextStyle(color: Color(0xFFEE4D2D))),
+          ),
+        ],
+      ),
+    );
+    if (result != null && mounted) setState(() => _shopMessage = result);
+  }
+
+  Future<void> _openEInvoiceDialog() async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Hóa đơn điện tử', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+        content: const Text(
+          'Bạn có muốn xuất hóa đơn điện tử cho đơn hàng này không?\n'
+          'Thông tin hóa đơn sẽ được gửi qua email sau khi đơn hoàn thành.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Không'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Yêu cầu', style: TextStyle(color: Color(0xFFEE4D2D))),
+          ),
+        ],
+      ),
+    );
+    if (result != null && mounted) setState(() => _requestEInvoice = result);
+  }
+
+  Future<void> _openShippingPicker() async {
+    final options = [
+      'Hôm Nay 21:00',
+      'Trong Ngày',
+      'Nhanh (2-3 ngày)',
+      'Tiết kiệm (3-5 ngày)',
+    ];
+    final result = await showModalBottomSheet<String>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(14),
+              child: Text('Phương thức vận chuyển', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+            ),
+            ...options.map((o) => ListTile(
+                  title: Text(o),
+                  trailing: _shippingMethod == o
+                      ? const Icon(Icons.check_circle, color: Color(0xFFEE4D2D))
+                      : null,
+                  onTap: () => Navigator.pop(ctx, o),
+                )),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (result != null && mounted) setState(() => _shippingMethod = result);
   }
 
   // ===================== CHI TIẾT =====================

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../data/mock_data.dart';
-import 'live_watch_screen.dart';
+import 'live_feed_screen.dart';
 
 class ShopeeLivePage extends StatefulWidget {
   const ShopeeLivePage({super.key});
@@ -70,7 +70,7 @@ class _ShopeeLivePageState extends State<ShopeeLivePage> {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         itemCount: _filters.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
           final bool selected = index == _selectedFilter;
           return GestureDetector(
@@ -107,15 +107,15 @@ class _ShopeeLivePageState extends State<ShopeeLivePage> {
         crossAxisSpacing: 6,
         mainAxisSpacing: 6,
       ),
-      itemBuilder: (context, index) => _buildLiveCard(_liveStreams[index]),
+      itemBuilder: (context, index) => _buildLiveCard(_liveStreams[index], index),
     );
   }
 
-  Widget _buildLiveCard(Map<String, dynamic> item) {
+  Widget _buildLiveCard(Map<String, dynamic> item, int index) {
     return GestureDetector(
       onTap: () {
         Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => LiveWatchScreen(stream: item)),
+          MaterialPageRoute(builder: (_) => LiveFeedScreen(initialIndex: index)),
         );
       },
       child: ClipRRect(
@@ -134,9 +134,9 @@ class _ShopeeLivePageState extends State<ShopeeLivePage> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withOpacity(0.55),
+                    Colors.black.withValues(alpha: 0.55),
                     Colors.transparent,
-                    Colors.black.withOpacity(0.75),
+                    Colors.black.withValues(alpha: 0.75),
                   ],
                   stops: const [0.0, 0.45, 1.0],
                 ),

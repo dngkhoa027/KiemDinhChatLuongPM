@@ -13,6 +13,8 @@ import '../../widgets/shop_avatar.dart';
 import 'cart_screen.dart';
 import 'checkout_screen.dart';
 import 'shop_screen.dart';
+import 'shop_chat_screen.dart';
+import 'product_search_screen.dart';
 
 /// Trang chi tiết sản phẩm – giao diện bám sát Shopee thật (2025/2026).
 /// Khi người dùng bấm vào bất kỳ sản phẩm nào (ở Trang chủ, Mall, Live...),
@@ -71,6 +73,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   bool _isFollowingShop = false;
   bool _followBusy = false;
   String? _shopKey;
+
+  // ---- Tìm kiếm trong đánh giá ----
+  final TextEditingController _reviewSearchCtrl = TextEditingController();
+  String _reviewSearchQuery = '';
 
   // Expandable sections
   bool _sizeGuideExpanded = false;
@@ -213,6 +219,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   void dispose() {
     _galleryController.dispose();
     _voucherTimer?.cancel();
+    _reviewSearchCtrl.dispose();
     super.dispose();
   }
 
@@ -326,6 +333,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
+  void _openChat(Product product) {
+    final shopName = product.shopName.trim().isNotEmpty ? product.shopName : 'Shop';
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ShopChatScreen(
+          shopName: shopName,
+          initialProduct: product,
+        ),
+      ),
+    );
+  }
+
   // ================= CHIA SẺ SẢN PHẨM =================
 
   /// Link sản phẩm dùng để chia sẻ (demo). Khi có domain/app link thật,
@@ -410,7 +430,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   /// Thêm sản phẩm (với phân loại đang chọn) vào giỏ hàng dùng chung.
   void _addToCart(Product product) {
     final variants = product.images.take(4).toList();
-    final hasVariants = variants.length > 1;
     final safeIndex = variants.isEmpty ? 0 : _selectedColor.clamp(0, variants.length - 1).toInt();
     final rawVariantImage = variants.isNotEmpty ? variants[safeIndex] : product.thumbnail;
     final variantImage = rawVariantImage.isNotEmpty
@@ -432,16 +451,148 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       category: product.category,
     );
 
+    _showAddedToCartSnackBar(
+      imageUrl: variantImage,
+      productName: productName,
+      location: product.location,
+    );
+  }
+
+  /// Snackbar đẹp, kiểu Shopee: nền trắng, thumbnail SP, icon check, nút cam.
+  void _showAddedToCartSnackBar({
+    required String imageUrl,
+    required String productName,
+    required String location,
+  }) {
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Đã thêm vào giỏ hàng'),
-        duration: const Duration(seconds: 2),
-        action: SnackBarAction(
-          label: 'XEM GIỎ HÀNG',
-          textColor: Colors.yellow,
-          onPressed: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const ShopeeCartPage()),
+        elevation: 6,
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Colors.transparent,
+        padding: EdgeInsets.zero,
+        margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+        duration: const Duration(seconds: 3),
+        content: Container(
+          padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.12),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              // Thumbnail + check badge
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      imageUrl,
+                      width: 48,
+                      height: 48,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        width: 48,
+                        height: 48,
+                        color: Colors.grey.shade200,
+                        child: const Icon(Icons.image_not_supported_outlined, size: 22, color: Colors.grey),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    right: -4,
+                    bottom: -4,
+                    child: Container(
+                      width: 18,
+                      height: 18,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF26A69A),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.check, size: 12, color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 10),
+              // Text
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Đã thêm vào giỏ hàng',
+                      style: TextStyle(
+                        color: Colors.black87,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        height: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      productName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 12,
+                        height: 1.2,
+                      ),
+                    ),
+                    if (location.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        'Phí vận chuyển 0đ · $location',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.grey.shade500,
+                          fontSize: 11,
+                          height: 1.2,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Nút Xem giỏ hàng
+              Material(
+                color: shopeeOrange,
+                borderRadius: BorderRadius.circular(8),
+                child: InkWell(
+                  onTap: () {
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const ShopeeCartPage()),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    child: Text(
+                      'XEM GIỎ HÀNG',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -497,7 +648,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                 width: 78,
                                 height: 78,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) =>
+                                errorBuilder: (_, _, _) =>
                                     Container(width: 78, height: 78, color: Colors.grey.shade200),
                               ),
                             ),
@@ -811,26 +962,35 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           icon: const Icon(Icons.arrow_back, color: shopeeOrange, size: 24),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Container(
-          height: 34,
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF5F5F5),
-            borderRadius: BorderRadius.circular(17),
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.search, size: 18, color: Colors.grey.shade500),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  product?.name ?? 'Tìm kiếm sản phẩm',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
-                ),
+        title: GestureDetector(
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => ProductSearchScreen(initialHint: product?.name),
               ),
-            ],
+            );
+          },
+          child: Container(
+            height: 34,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5F5F5),
+              borderRadius: BorderRadius.circular(17),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.search, size: 18, color: Colors.grey.shade500),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    product?.name ?? 'Tìm kiếm sản phẩm',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         actions: [
@@ -942,7 +1102,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.45),
+                  color: Colors.black.withValues(alpha: 0.45),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -1039,7 +1199,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget _countdownBox(String v) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.28),
+          color: Colors.black.withValues(alpha: 0.28),
           borderRadius: BorderRadius.circular(3),
         ),
         child: Text(v, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
@@ -1171,7 +1331,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: fg.withOpacity(0.25)),
+        border: Border.all(color: fg.withValues(alpha: 0.25)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1286,7 +1446,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: variants.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
               itemBuilder: (context, index) {
                 final selected = index == _selectedColor;
                 return InkWell(
@@ -1514,15 +1674,52 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               children: [
                 Icon(Icons.search, size: 18, color: Colors.grey.shade500),
                 const SizedBox(width: 8),
-                Text(
-                  'Tìm đánh giá từ những người mua khác',
-                  style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+                Expanded(
+                  child: TextField(
+                    controller: _reviewSearchCtrl,
+                    onChanged: (v) => setState(() => _reviewSearchQuery = v),
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      isDense: true,
+                      hintText: 'Tìm đánh giá từ những người mua khác',
+                      hintStyle: TextStyle(fontSize: 13),
+                    ),
+                    style: const TextStyle(fontSize: 13),
+                  ),
                 ),
+                if (_reviewSearchQuery.isNotEmpty)
+                  GestureDetector(
+                    onTap: () => setState(() {
+                      _reviewSearchCtrl.clear();
+                      _reviewSearchQuery = '';
+                    }),
+                    child: Icon(Icons.close, size: 16, color: Colors.grey.shade500),
+                  ),
               ],
             ),
           ),
           const SizedBox(height: 14),
-          ..._mockReviews(product).map((r) => _buildReviewTile(r, product)),
+          Builder(builder: (context) {
+            final allReviews = _mockReviews(product);
+            final q = _reviewSearchQuery.trim().toLowerCase();
+            final reviews = q.isEmpty
+                ? allReviews
+                : allReviews.where((r) => r.comment.toLowerCase().contains(q)).toList();
+            if (reviews.isEmpty) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Center(
+                  child: Text(
+                    'Không tìm thấy đánh giá phù hợp.',
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                  ),
+                ),
+              );
+            }
+            return Column(
+              children: reviews.map((r) => _buildReviewTile(r, product)).toList(),
+            );
+          }),
           const SizedBox(height: 4),
           InkWell(
             onTap: () => _showComingSoon('Đánh giá sản phẩm tương tự'),
@@ -1714,7 +1911,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               width: 80,
               height: 80,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Icon(Icons.image_outlined, color: Colors.grey.shade400, size: 28),
+              errorBuilder: (_, _, _) => Icon(Icons.image_outlined, color: Colors.grey.shade400, size: 28),
               loadingBuilder: (context, child, progress) {
                 if (progress == null) return child;
                 return Container(
@@ -1782,7 +1979,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: 3,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
               itemBuilder: (context, index) {
                 final thumb = imgAt(index);
                 return Container(
@@ -1800,7 +1997,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         Image.network(
                           thumb,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(color: Colors.grey.shade300),
+                          errorBuilder: (_, _, _) => Container(color: Colors.grey.shade300),
                           loadingBuilder: (context, child, progress) {
                             if (progress == null) return child;
                             return Container(color: Colors.grey.shade300);
@@ -1809,13 +2006,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       else
                         Container(color: Colors.grey.shade300),
                       // Lớp phủ mờ để chữ + icon play nổi bật hơn.
-                      Container(color: Colors.black.withOpacity(0.12)),
+                      Container(color: Colors.black.withValues(alpha: 0.12)),
                       Center(
                         child: Container(
                           width: 36,
                           height: 36,
                           decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.55),
+                            color: Colors.black.withValues(alpha: 0.55),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(Icons.play_arrow, color: Colors.white, size: 24),
@@ -1959,7 +2156,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: items.length.clamp(0, 8),
-                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  separatorBuilder: (_, _) => const SizedBox(width: 8),
                   itemBuilder: (context, index) => _buildShopProductCard(items[index], shopName),
                 ),
               );
@@ -2227,7 +2424,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         color: Colors.white,
         border: Border(top: BorderSide(color: Colors.grey.shade200)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 6, offset: const Offset(0, -2)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 6, offset: const Offset(0, -2)),
         ],
       ),
       child: SafeArea(
@@ -2237,7 +2434,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              _bottomIconButton(Icons.chat_bubble_outline, 'Chat ngay', () => _showComingSoon('Chat với Shop')),
+              _bottomIconButton(Icons.chat_bubble_outline, 'Chat ngay', () => _openChat(product)),
               Container(width: 1, height: 28, color: Colors.grey.shade300, margin: const EdgeInsets.symmetric(horizontal: 4)),
               _bottomCartIconButton(
                 'Thêm vào\nGiỏ hàng',
@@ -2438,7 +2635,7 @@ class _ShareBottomSheet extends StatelessWidget {
                       width: 44,
                       height: 44,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
+                      errorBuilder: (_, _, _) => Container(
                         width: 44,
                         height: 44,
                         color: Colors.grey.shade200,

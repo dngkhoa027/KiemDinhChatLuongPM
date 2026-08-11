@@ -136,7 +136,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            color: (success ? const Color(0xFF2E9E5B) : Colors.redAccent).withOpacity(0.1),
+            color: (success ? const Color(0xFF2E9E5B) : Colors.redAccent).withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(
@@ -239,7 +239,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: const LinearGradient(colors: [deepOrange, shopeeOrange]),
-              boxShadow: [BoxShadow(color: shopeeOrange.withOpacity(0.25), blurRadius: 20, offset: const Offset(0, 8))],
+              boxShadow: [BoxShadow(color: shopeeOrange.withValues(alpha: 0.25), blurRadius: 20, offset: const Offset(0, 8))],
             ),
             child: const Icon(Icons.lock_reset_rounded, color: Colors.white, size: 34),
           ),
@@ -264,7 +264,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 16, offset: const Offset(0, 6))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 16, offset: const Offset(0, 6))],
       ),
       padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
       child: Column(
@@ -347,7 +347,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 16, offset: const Offset(0, 6))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 16, offset: const Offset(0, 6))],
       ),
       padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
       child: Column(
@@ -425,7 +425,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         onPressed: _saving ? null : _submit,
         style: ElevatedButton.styleFrom(
           backgroundColor: shopeeOrange,
-          disabledBackgroundColor: shopeeOrange.withOpacity(0.5),
+          disabledBackgroundColor: shopeeOrange.withValues(alpha: 0.5),
           foregroundColor: Colors.white,
           elevation: 0,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../data/mock_data.dart';
-import '../auth/login_screen.dart';
+import '../../services/auth_service.dart';
+import '../auth/auth_gate.dart';
 import 'personal_info_screen.dart';
 import 'change_password_screen.dart';
 import 'address_book_screen.dart';
@@ -289,11 +290,16 @@ class _ShopeeSettingsPageState extends State<ShopeeSettingsPage> {
             child: const Text("Huỷ", style: TextStyle(color: Colors.grey)),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
+              // Xoá phiên đăng nhập đã lưu trên máy (Firebase Auth) — nếu
+              // không gọi bước này, lần mở app sau AuthGate vẫn thấy còn
+              // phiên cũ và tự động đăng nhập lại dù đã bấm "Đăng xuất".
+              await AuthService.instance.logout();
+              if (!context.mounted) return;
               Navigator.pushAndRemoveUntil(
                 context,
-                MaterialPageRoute(builder: (_) => const ShopeeLoginPage()),
+                MaterialPageRoute(builder: (_) => const AuthGate()),
                 (route) => false,
               );
             },
