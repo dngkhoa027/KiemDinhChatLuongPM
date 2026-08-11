@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../buyer/cart_screen.dart';
+import '../buyer/chat_list_screen.dart';
 import 'settings_screen.dart';
 import 'personal_info_screen.dart';
 import '../seller/seller_register_screen.dart';
@@ -11,6 +12,7 @@ import '../../services/shop_service.dart';
 import '../../services/cart_service.dart';
 import '../../utils/avatar_utils.dart';
 import '../buyer/my_orders_screen.dart';
+import '../buyer/my_reviews_screen.dart';
 import '../../data/mock_data.dart';
 import '../../services/order_service.dart';
 import '../../models/order_model.dart';
@@ -77,6 +79,13 @@ class _ShopeeProfilePageState extends State<ShopeeProfilePage> {
       MaterialPageRoute(
         builder: (_) => MyOrdersScreen(initialTabIndex: tabIndex),
       ),
+    );
+  }
+
+  void _openMyReviews() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const MyReviewsScreen()),
     );
   }
 
@@ -271,7 +280,15 @@ class _ShopeeProfilePageState extends State<ShopeeProfilePage> {
                     ),
                   ),
                   const SizedBox(width: 14),
-                  const Icon(Icons.chat_bubble_outline, color: Colors.white, size: 23),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const ChatListScreen()),
+                      );
+                    },
+                    child: const Icon(Icons.chat_bubble_outline, color: Colors.white, size: 23),
+                  ),
                 ],
               ),
             ],
@@ -488,7 +505,7 @@ class _ShopeeProfilePageState extends State<ShopeeProfilePage> {
                     icon: Icons.star_border_rounded,
                     label: "Đánh giá",
                     badge: toReview,
-                    onTap: () => _openOrders(4),
+                    onTap: _openMyReviews,
                   ),
                 ],
               );

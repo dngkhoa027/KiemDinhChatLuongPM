@@ -76,3 +76,42 @@ class ChatMessage {
     };
   }
 }
+
+/// Thông tin tóm tắt 1 hội thoại giữa người mua và 1 shop, dùng để hiển thị
+/// trong màn hình "Danh sách Chat" (giống tab Chat của Shopee) — mỗi shop
+/// đã từng nhắn tin sẽ là 1 dòng, kèm tin nhắn gần nhất + thời gian.
+/// Đọc từ document `shop_chats/{conversationId}`.
+class ShopConversationSummary {
+  final String id;
+  final String shopName;
+  final String lastMessage;
+  final DateTime lastMessageAt;
+  final bool lastSenderIsShop;
+
+  const ShopConversationSummary({
+    required this.id,
+    required this.shopName,
+    required this.lastMessage,
+    required this.lastMessageAt,
+    required this.lastSenderIsShop,
+  });
+
+  factory ShopConversationSummary.fromMap(String id, Map<String, dynamic> data) {
+    final ts = data['lastMessageAt'];
+    DateTime lastMessageAt;
+    if (ts is DateTime) {
+      lastMessageAt = ts;
+    } else if (ts != null && ts.runtimeType.toString() == 'Timestamp') {
+      lastMessageAt = (ts as dynamic).toDate() as DateTime;
+    } else {
+      lastMessageAt = DateTime.now();
+    }
+    return ShopConversationSummary(
+      id: id,
+      shopName: (data['shopName'] as String?) ?? 'Shop',
+      lastMessage: (data['lastMessage'] as String?) ?? '',
+      lastMessageAt: lastMessageAt,
+      lastSenderIsShop: (data['lastSenderIsShop'] as bool?) ?? false,
+    );
+  }
+}

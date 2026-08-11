@@ -41,6 +41,19 @@ class ShopChatService {
     return '${buyerUid}_${_slugOf(shopName)}';
   }
 
+  /// Stream danh sách TẤT CẢ hội thoại (shop) mà 1 người mua đã từng nhắn
+  /// tin, sắp theo tin nhắn gần nhất trước — dùng cho màn hình "Danh sách
+  /// Chat" (giống tab Chat của Shopee, liệt kê từng shop đã chat).
+  Stream<List<ShopConversationSummary>> watchConversations({required String buyerUid}) {
+    return _conversationsRef
+        .where('buyerUid', isEqualTo: buyerUid)
+        .orderBy('lastMessageAt', descending: true)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((d) => ShopConversationSummary.fromMap(d.id, d.data()))
+            .toList());
+  }
+
   /// Stream toàn bộ tin nhắn của 1 hội thoại, sắp theo thời gian gửi.
   Stream<List<ChatMessage>> watchMessages({
     required String buyerUid,

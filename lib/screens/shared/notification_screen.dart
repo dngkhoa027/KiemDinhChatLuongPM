@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../buyer/cart_screen.dart';
+import '../buyer/chat_list_screen.dart';
 import '../../data/mock_data.dart';
 import '../../services/cart_service.dart';
 
@@ -155,7 +156,15 @@ class _ShopeeNotificationPageState extends State<ShopeeNotificationPage> {
                     ),
                   ),
                   const SizedBox(width: 18),
-                  const Icon(Icons.chat_bubble_outline, color: shopeeRed, size: 26),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const ChatListScreen()),
+                      );
+                    },
+                    child: const Icon(Icons.chat_bubble_outline, color: shopeeRed, size: 26),
+                  ),
                 ],
               ),
             ),

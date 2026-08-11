@@ -6,6 +6,7 @@ import 'mall_screen.dart';
 import 'live_watch_screen.dart';
 import 'live_feed_screen.dart';
 import 'cart_screen.dart';
+import 'chat_list_screen.dart';
 import 'product_detail_screen.dart';
 import 'product_search_screen.dart';
 import 'qr_scan_screen.dart';
@@ -370,16 +371,23 @@ class _ShopeeHomePageState extends State<ShopeeHomePage> {
                     ),
                   ),
                   const SizedBox(width: 14),
-                  Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      const Icon(Icons.chat_bubble_outline, color: Colors.white, size: 24),
-                      Positioned(
-                        right: -6,
-                        top: -5,
-                        child: _yellowBadge('19'),
-                      ),
-                    ],
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const ChatListScreen()),
+                      );
+                    },
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        const Icon(Icons.chat_bubble_outline, color: Colors.white, size: 24),
+                        Positioned(
+                          right: -6,
+                          top: -5,
+                          child: _yellowBadge('19'),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),

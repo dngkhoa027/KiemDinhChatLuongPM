@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../data/mock_data.dart';
 import '../../models/order_model.dart';
+import '../../models/review_model.dart';
 import '../../services/order_service.dart';
 import 'order_detail_screen.dart';
 import 'order_search_screen.dart';
+import 'write_review_screen.dart';
 
 /// Định dạng số tiền theo kiểu Việt Nam: 1.234.000đ
 String _formatVnd(int amount) {
@@ -692,7 +694,7 @@ class OrderCard extends StatelessWidget {
               ],
 
               // ── Nút hành động ──
-              ..._actionButtons(),
+              ..._actionButtons(context),
             ],
           ),
         ),
@@ -700,8 +702,8 @@ class OrderCard extends StatelessWidget {
     );
   }
 
-  List<Widget> _actionButtons() {
-    Widget btn(String text, {bool primary = false}) {
+  List<Widget> _actionButtons(BuildContext context) {
+    Widget btn(String text, {bool primary = false, VoidCallback? onPressed}) {
       return OutlinedButton(
         style: OutlinedButton.styleFrom(
           foregroundColor: primary ? orange : const Color(0xFF333333),
@@ -716,7 +718,7 @@ class OrderCard extends StatelessWidget {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3)),
           visualDensity: VisualDensity.compact,
         ),
-        onPressed: () {},
+        onPressed: onPressed ?? () {},
         child: Text(text, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w400)),
       );
     }
@@ -735,7 +737,28 @@ class OrderCard extends StatelessWidget {
             children: [
               btn('Trả hàng/Hoàn tiền'),
               const SizedBox(width: 8),
-              btn('Đánh giá', primary: true),
+              btn(
+                'Đánh giá',
+                primary: true,
+                onPressed: () {
+                  final firstLine = order.items.first;
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => WriteReviewScreen(
+                        item: ReviewableItem(
+                          orderId: order.id,
+                          itemIndex: 0,
+                          shopName: firstLine.shopName,
+                          productName: firstLine.name,
+                          productImage: firstLine.image,
+                          variant: firstLine.variant,
+                          daysLeftToReview: 30,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
             ],
           ),
         ];
