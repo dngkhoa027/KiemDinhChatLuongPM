@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🛍️ **DOANFLUTTER** - SHOPEE App
 
 Một ứng dụng thương mại điện tử hiện đại được xây dựng bằng **Flutter**, lấy cảm hứng từ Shopee. Hỗ trợ mua sắm trực tuyến mượt mà trên cả **Android, iOS & Web**.
@@ -43,3 +44,6 @@ Một ứng dụng thương mại điện tử hiện đại được xây dựn
 -->
 
 ---
+=======
+# KiemDinhChatLuongPM
+>>>>>>> origin/main
